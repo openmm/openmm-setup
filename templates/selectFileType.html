@@ -1,0 +1,20 @@
+{% extends "layout.html" %}
+{% block title %}Select Input File Type{% endblock %}
+{% block body %}
+<h1>Welcome to OpenMM!</h1>
+What kind of file or files do you have describing the system to simulate?
+<p/>
+<form method="get" action="{{ url_for('selectFiles') }}">
+    <input type="radio" name="type" value="pdb" checked/> PDB
+    <p style="margin-left:50px">A PDB file</p>
+    <input type="radio" name="type" value="pdbx"/> PDBx/mmCIF
+    <p style="margin-left:50px">A PDBx/mmCIF file</p>
+    <input type="radio" name="type" value="amber"/> Amber
+    <p style="margin-left:50px">Amber prmtop and inpcrd files</p>
+    <input type="radio" name="type" value="charmm"/> CHARMM
+    <p style="margin-left:50px">A CHARMM psf file, along with the force field definition in CHARMM format</p>
+    <input type="radio" name="type" value="gromacs"/> Gromacs
+    <p style="margin-left:50px">Gromacs gro and top files</p>
+    <input type="submit" value="Continue"/>
+</form>
+{% endblock %}

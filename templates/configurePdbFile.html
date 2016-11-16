@@ -1,0 +1,37 @@
+{% extends "layout.html" %}
+{% block title %}Select Input Files{% endblock %}
+{% block body %}
+Select the input file and options for how to model it.
+<p/>
+<form method="get" action="{{ url_for('configureFiles') }}">
+    File Name <input type="text" name="filename"/>
+    <p/>
+    Force Field
+    <select name="forcefield" id="forcefield">
+        <option value="amber99sb.xml">AMBER99SB</option>
+        <option value="amber99sbildn.xml" selected>AMBER99SB-ILDN</option>
+        <option value="amber03.xml">AMBER03</option>
+        <option value="amber10.xml">AMBER10</option>
+        <option value="amoeba2013.xml">AMOEBA 2013</option>
+        <option value="charmm_polar_2013.xml">CHARMM Polar 2013</option>
+    </select>
+    <p/>
+    Water Model
+    <select name="waterModel" id="waterModel">
+        <option value="tip3p.xml">TIP3P</option>
+        <option value="tip3pfb.xml" selected>TIP3P-FB</option>
+        <option value="tip4pew.xml">TIP4P-Ew</option>
+        <option value="tip4pfb.xml">TIP4P-FB</option>
+        <option value="tip5p.xml">TIP5P</option>
+        <option value="spce.xml">SPC/E</option>
+        <option value="implicit">OBC (implicit solvent)</option>
+    </select>
+    <p/>
+    <input type="submit" value="Continue"/>
+</form>
+{% if 'forcefield' in session %}
+<script>
+    document.getElementById("forcefield").value = {{ session['forcefield'] }}
+</script>
+{% endif %}
+{% endblock %}

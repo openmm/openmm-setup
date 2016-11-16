@@ -1,0 +1,194 @@
+{% extends "layout.html" %}
+{% block title %}Simulation Options{% endblock %}
+
+{% macro choice(id, options) %}
+    <select name="{{ id }}" id="{{ id }}" onchange="optionChanged()">
+        {% for option in options %}
+            <option value="{{ option[0] }}" title="{{ option[2] }}" {{ 'selected' if session[id] == option[0] else '' }}>{{ option[1] }}</option>
+        {% endfor %}
+    </select>
+{% endmacro %}
+
+{% block body %}
+<table>
+<tr>
+<td>
+    <form method="post" id="optionsForm" action="{{ url_for('setSimulationOptions') }}">
+        <h2>System</h2>
+        <table>
+        <tr>
+        <td>Nonbonded Method</td>
+        <td>{{ choice('nonbondedMethod', [
+            ('NoCutoff', 'No cutoff', 'The system is not periodic, and no cutoff is applied to nonbonded interactions.'),
+            ('CutoffNonPeriodic', 'Cutoff, non-periodic', 'The system is not periodic.  Long range interactions are cut off with the reaction field method.'),
+            ('CutoffPeriodic', 'Cutoff, periodic', 'Periodic boundary conditions are used.  Long range interactions are cut off with the reaction field method.'),
+            ('PME', 'PME', 'Periodic boundary conditions are used.  Long range interactions are computed with Particle Mesh Ewald.')]) }}</td>
+        </tr>
+        <tr id="cutoffRow">
+        <td>Cutoff Distance</td>
+        <td><input type="text" name="cutoff" id="cutoff" value="{{ session['cutoff'] }}" oninput="optionChanged()" title="Nonbonded interactions beyond this distance will be ignored."/> nm</td>
+        </tr>
+        <tr id="ewaldTolRow">
+        <td>Ewald Error Tolerance</td>
+        <td><input type="text" name="ewaldTol" id="ewaldTol" value="{{ session['ewaldTol'] }}" oninput="optionChanged()" title="This determines the accuracy of interactions computed with PME."/></td>
+        </tr>
+        <tr>
+        <td>Constraints</td>
+        <td>{{ choice('constraints', [
+            ('none', 'None', 'No degrees of freedom are constrained.'),
+            ('water', 'Water only', 'Water molecules are kept rigid, but no other degrees of freedom are constrained.'),
+            ('hbonds', 'Bonds involving hydrogen', 'The lengths of bonds involving a hydrogen atom are kept fixed.  Water molecules are kept rigid.'),
+            ('allbonds', 'All bonds', 'All bond lengths are kept fixed.  Water molecules are kept rigid.')]) }}</td>
+        </tr>
+        <tr id="constraintTolRow">
+        <td>Constraint Error Tolerance</td>
+        <td><input type="text" name="constraintTol" id="constraintTol" value="{{ session['constraintTol'] }}" oninput="optionChanged()" title="The maximum allowed relative error in constrained distance."/></td>
+        </tr>
+        </table>
+    
+    
+        <h2>Integrator</h2>
+        <table>
+        <tr>
+        <td>Step Size</td>
+        <td><input type="text" name="dt" id="dt" value="{{ session['dt'] }}" oninput="optionChanged()" title="The size of the time steps used by the integrator."/> ps</td>
+        </tr>
+        <tr>
+        <td>Statistical Ensemble</td>
+        <td>{{ choice('ensemble', [
+            ('npt', 'Constant pressure, temperature', 'The simulation includes a thermostat and barostat to sample a constant pressure, constant temperature (NPT) ensemble.'),
+            ('nvt', 'Constant volume, temperature', 'The simulation includes a thermostat so it samples a constant volume, constant temperature (NVT) ensemble.'),
+            ('nve', 'Constant volume, energy', 'The box volume and total energy are both held constant so the simulation samples a NVE ensemble.')]) }}</td>
+        </tr>
+        <tr id="temperatureRow">
+        <td>Temperature</td>
+        <td><input type="text" name="temperature" id="temperature" value="{{ session['temperature'] }}" oninput="optionChanged()" title="The temperature at which the system is simulated."/> K</td>
+        </tr>
+        <tr id="frictionRow">
+        <td>Friction Coefficient</td>
+        <td><input type="text" name="friction" id="friction" value="{{ session['friction'] }}" oninput="optionChanged()" title="The friction coefficient coupling the system to the thermostat."/> ps<sup>-1</sup></td>
+        </tr>
+        <tr id="pressureRow">
+        <td>Pressure</td>
+        <td><input type="text" name="pressure" id="pressure" value="{{ session['pressure'] }}" oninput="optionChanged()" title="The pressure at which the system is simulated."/> atm</td>
+        </tr>
+        <tr id="barostatIntervalRow">
+        <td>Barostat Interval</td>
+        <td><input type="text" name="barostatInterval" id="barostatInterval" value="{{ session['barostatInterval'] }}" oninput="optionChanged()" title="The interval at which the barostat attempts to change the box volume, measured in time steps."/> steps</td>
+        </tr>
+        </table>
+    
+    
+        <h2>Simulation</h2>
+        <table>
+        <tr>
+        <td>Simulation Length</td>
+        <td><input type="text" name="steps" id="steps" value="{{ session['steps'] }}" oninput="optionChanged()" title="The total length of the simulation, measured in time steps."/> steps</td>
+        </tr>
+        <tr>
+        <td>Equilibration Steps</td>
+        <td><input type="text" name="equilibrationSteps" id="equilibrationSteps" value="{{ session['equilibrationSteps'] }}" oninput="optionChanged()" title="The number of time steps of equilibration to run before starting the main simulation."/> steps</td>
+        </tr>
+        <tr>
+        <td>Platform</td>
+        <td>{{ choice('platform', [
+            ('Reference', 'Reference', 'The Reference platform is useful for testing, but not recommended for production simulations.'),
+            ('CPU', 'CPU', 'Run the simulation on a conventional CPU'),
+            ('CUDA', 'CUDA', 'Run the simulation on an NVIDIA GPU'),
+            ('OpenCL', 'OpenCL', 'The OpenCL platform on various kinds of hardware, including NVIDIA, AMD, and Intel GPUs')]) }}</td>
+        </tr>
+        <tr id="precisionRow">
+        <td>Precision</td>
+        <td>{{ choice('precision', [
+            ('single', 'Single', 'Most calculations are done in single precision.  This is the fastest option.'),
+            ('mixed', 'Mixed', 'Use a mix of single and double precision to give reasonably high performance, but better energy conservation than single precision.  This is recommended for NVE simulations.'),
+            ('double', 'Double', 'All calculations are done in double precision.  This can be very slow.')]) }}</td>
+        </tr>
+        <tr>
+            <td colspan="2"><label><input type="checkbox" name="writeDCD" id="writeDCD" oninput="optionChanged()" {{ 'checked' if session['writeDCD'] else '' }}> Save trajectory to a DCD file</label></td>
+        </tr>
+        <tr id="dcdFilenameRow">
+        <td>DCD Filename</td>
+        <td><input type="text" name="dcdFilename" id="dcdFilename" value="{{ session['dcdFilename'] }}" oninput="optionChanged()" title="The filename for the trajectory file"/></td>
+        </tr>
+        <tr id="dcdIntervalRow">
+        <td>DCD Output Interval</td>
+        <td><input type="text" name="dcdInterval" id="dcdInterval" value="{{ session['dcdInterval'] }}" oninput="optionChanged()" title="The interval at which to write frames to the trajectory, measured in time steps"/> steps</td>
+        </tr>
+        <tr>
+        <td colspan="2"><label><input type="checkbox" name="writeData" id="writeData" oninput="optionChanged()" {{ 'checked' if session['writeData'] else '' }}> Save data to a log file</label></td>
+        </tr>
+        <tr id="dataFilenameRow">
+        <td>Data Filename</td>
+        <td><input type="text" name="dataFilename" id="dataFilename" value="{{ session['dataFilename'] }}" oninput="optionChanged()" title="The filename for the log file"/></td>
+        </tr>
+        <tr id="dataIntervalRow">
+        <td>Data Output Interval</td>
+        <td><input type="text" name="dataInterval" id="dataInterval" value="{{ session['dataInterval'] }}" oninput="optionChanged()" title="The interval at which to write data to the log file, measured in time steps"/> steps</td>
+        </tr>
+        <tr id="dataFieldsRow">
+        <td>Data to Write</td>
+        <td>
+        <label><input type="checkbox" name="dataFields" value="step" oninput="optionChanged()" {{ 'checked' if 'step' in session['dataFields'] else '' }} title="The number of time steps completed"> Step</label><br/>
+        <label><input type="checkbox" name="dataFields" value="time" oninput="optionChanged()" {{ 'checked' if 'time' in session['dataFields'] else '' }} title="The amount of time simulated so far"> Time</label><br/>
+        <label><input type="checkbox" name="dataFields" value="speed" oninput="optionChanged()" {{ 'checked' if 'speed' in session['dataFields'] else '' }} title="The speed at which the simulation is running"> Speed</label><br/>
+        <label><input type="checkbox" name="dataFields" value="progress" oninput="optionChanged()" {{ 'checked' if 'progress' in session['dataFields'] else '' }} title="The fraction of the simulation completed so far"> Progress</label><br/>
+        <label><input type="checkbox" name="dataFields" value="elapsedTime" oninput="optionChanged()" {{ 'checked' if 'elapsedTime' in session['dataFields'] else '' }} title="The elapsed clock time so far"> Elapsed Time</label><br/>
+        <label><input type="checkbox" name="dataFields" value="remainingTime" oninput="optionChanged()" {{ 'checked' if 'remainingTime' in session['dataFields'] else '' }} title="An estimate of the remaining clock time needed to complete the simulation"> Remaining Time</label><br/>
+        <label><input type="checkbox" name="dataFields" value="potentialEnergy" oninput="optionChanged()" {{ 'checked' if 'potentialEnergy' in session['dataFields'] else '' }} title="The current potential energy of the system"> Potential Energy</label><br/>
+        <label><input type="checkbox" name="dataFields" value="kineticEnergy" oninput="optionChanged()" {{ 'checked' if 'kineticEnergy' in session['dataFields'] else '' }} title="The current kinetic energy of the system"> Kinetic Energy</label><br/>
+        <label><input type="checkbox" name="dataFields" value="totalEnergy" oninput="optionChanged()" {{ 'checked' if 'totalEnergy' in session['dataFields'] else '' }} title="The current total energy of the system"> Total Energy</label><br/>
+        <label><input type="checkbox" name="dataFields" value="temperature" oninput="optionChanged()" {{ 'checked' if 'temperature' in session['dataFields'] else '' }} title="The instantaneous temperature of the system"> Temperature</label><br/>
+        <label><input type="checkbox" name="dataFields" value="volume" oninput="optionChanged()" {{ 'checked' if 'volume' in session['dataFields'] else '' }} title="The current volume of the periodic box"> Volume</label><br/>
+        <label><input type="checkbox" name="dataFields" value="density" oninput="optionChanged()" {{ 'checked' if 'density' in session['dataFields'] else '' }} title="The current density of the system"> Density</label><br/>
+        </td>
+<!--step=False, time=False, potentialEnergy=False, kineticEnergy=False, totalEnergy=False, temperature=False, volume=False, density=False,
+                 progress=False, remainingTime=False, speed=False, elapsedTime=False, separator=',', systemMass=None, totalSteps=None -->
+        </tr>
+        </table>
+    </form>
+</td>
+<td><pre><code id="script"></code></pre></td>
+</tr>
+</table>
+
+<script>
+function optionChanged() {
+    // Update UI elements.
+    
+    nonbondedMethod = document.getElementById("nonbondedMethod").value;
+    document.getElementById("cutoffRow").style.display = (nonbondedMethod == 'NoCutoff' ? 'none' : 'table-row');
+    document.getElementById("ewaldTolRow").style.display = (nonbondedMethod == 'PME' ? 'table-row' : 'none');
+    constraints = document.getElementById("constraints").value;
+    document.getElementById("constraintTolRow").style.display = (constraints == 'none' ? 'none' : 'table-row');
+    ensemble = document.getElementById("ensemble").value;
+    document.getElementById("temperatureRow").style.display = (ensemble == 'nve' ? 'none' : 'table-row');
+    document.getElementById("frictionRow").style.display = (ensemble == 'nve' ? 'none' : 'table-row');
+    document.getElementById("pressureRow").style.display = (ensemble == 'npt' ? 'table-row' : 'none');
+    document.getElementById("barostatIntervalRow").style.display = (ensemble == 'npt' ? 'table-row' : 'none');
+    platform = document.getElementById("platform").value;
+    document.getElementById("precisionRow").style.display = (platform == 'CUDA' || platform == 'OpenCL' ? 'table-row' : 'none');
+    writeDCD = document.getElementById("writeDCD").checked;
+    document.getElementById("dcdFilenameRow").style.display = (writeDCD ? 'table-row' : 'none');
+    document.getElementById("dcdIntervalRow").style.display = (writeDCD ? 'table-row' : 'none');
+    writeData = document.getElementById("writeData").checked;
+    document.getElementById("dataFilenameRow").style.display = (writeData ? 'table-row' : 'none');
+    document.getElementById("dataIntervalRow").style.display = (writeData ? 'table-row' : 'none');
+    
+    // Submit the form.
+    
+    form = document.getElementById("optionsForm");
+    var request = new XMLHttpRequest();
+    var data = new FormData(form);
+    request.addEventListener("load", function(event) {
+        document.getElementById("script").textContent = event.target.responseText;
+    });
+    request.open("POST", "{{ url_for('setSimulationOptions') }}");
+    request.send(data);
+}
+
+// Configure the page based on initial values
+
+optionChanged()
+</script>
+{% endblock %}
