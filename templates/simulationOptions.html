@@ -2,7 +2,7 @@
 {% block title %}Simulation Options{% endblock %}
 
 {% macro choice(id, options) %}
-    <select name="{{ id }}" id="{{ id }}" onchange="optionChanged()">
+    <select name="{{ id }}" id="{{ id }}" class="form-control" onchange="optionChanged()">
         {% for option in options %}
             <option value="{{ option[0] }}" title="{{ option[2] }}" {{ 'selected' if session[id] == option[0] else '' }}>{{ option[1] }}</option>
         {% endfor %}
@@ -10,7 +10,7 @@
 {% endmacro %}
 
 {% macro textfield(id, title) %}
-    <input type="text" name="{{ id }}" id="{{ id }}" value="{{ session[id] }}" oninput="optionChanged()" title="{{ title }}"/>
+    <input type="text" name="{{ id }}" id="{{ id }}" value="{{ session[id] }}" class="form-control" oninput="optionChanged()" title="{{ title }}"/>
 {% endmacro %}
 
 {% macro datafieldbox(id, name, title) %}
@@ -18,174 +18,168 @@
 {% endmacro %}
 
 {% block body %}
-<table>
-<tr>
-<td>
+<div class="row">
+<div class="col-md-4">
     <form method="post" id="optionsForm" action="{{ url_for('setSimulationOptions') }}">
         <h2>System</h2>
-        <table>
-        <tr>
-        <td>Nonbonded Method</td>
+        <div class="form-group">
+        <label for="nonbondedMethod">Nonbonded Method</label>
         {% if session['forcefield'].startswith('amoeba') %}
-            <td>{{ choice('nonbondedMethod', [
+            {{ choice('nonbondedMethod', [
                 ('NoCutoff', 'No cutoff', 'The system is not periodic, and no cutoff is applied to nonbonded interactions.'),
-                ('PME', 'PME', 'Periodic boundary conditions are used.  Long range interactions are computed with Particle Mesh Ewald.')]) }}</td>
+                ('PME', 'PME', 'Periodic boundary conditions are used.  Long range interactions are computed with Particle Mesh Ewald.')]) }}
         {% else %}
-            <td>{{ choice('nonbondedMethod', [
+            {{ choice('nonbondedMethod', [
                 ('NoCutoff', 'No cutoff', 'The system is not periodic, and no cutoff is applied to nonbonded interactions.'),
                 ('CutoffNonPeriodic', 'Cutoff, non-periodic', 'The system is not periodic.  Long range interactions are cut off with the reaction field method.'),
                 ('CutoffPeriodic', 'Cutoff, periodic', 'Periodic boundary conditions are used.  Long range interactions are cut off with the reaction field method.'),
-                ('PME', 'PME', 'Periodic boundary conditions are used.  Long range interactions are computed with Particle Mesh Ewald.')]) }}</td>
+                ('PME', 'PME', 'Periodic boundary conditions are used.  Long range interactions are computed with Particle Mesh Ewald.')]) }}
         {% endif %}
-        </tr>
-        <tr id="cutoffRow">
-        <td>Cutoff Distance</td>
-        <td>{{ textfield('cutoff', 'Nonbonded interactions beyond this distance will be ignored.') }} nm</td>
-        </tr>
-        <tr id="ewaldTolRow">
-        <td>Ewald Error Tolerance</td>
-        <td>{{ textfield('ewaldTol', 'This determines the accuracy of interactions computed with PME.') }}</td>
-        </tr>
-        <tr>
-        <td>Constraints</td>
-        <td>{{ choice('constraints', [
+        </div>
+        <div class="form-group" id="cutoffRow">
+        <label for="cutoff">Cutoff Distance (nm)</label>
+        {{ textfield('cutoff', 'Nonbonded interactions beyond this distance will be ignored.') }}
+        </div>
+        <div class="form-group" id="ewaldTolRow">
+        <label for="ewaldTol">Ewald Error Tolerance</label>
+        {{ textfield('ewaldTol', 'This determines the accuracy of interactions computed with PME.') }}
+        </div>
+        <div class="form-group">
+        <label for="constraints">Constraints</label>
+        {{ choice('constraints', [
             ('none', 'None', 'No degrees of freedom are constrained.'),
             ('water', 'Water only', 'Water molecules are kept rigid, but no other degrees of freedom are constrained.'),
             ('hbonds', 'Bonds involving hydrogen', 'The lengths of bonds involving a hydrogen atom are kept fixed.  Water molecules are kept rigid.'),
-            ('allbonds', 'All bonds', 'All bond lengths are kept fixed.  Water molecules are kept rigid.')]) }}</td>
-        </tr>
-        <tr id="constraintTolRow">
-        <td>Constraint Error Tolerance</td>
-        <td>{{ textfield('constraintTol', 'The maximum allowed relative error in constrained distance.') }}</td>
-        </tr>
-        </table>
+            ('allbonds', 'All bonds', 'All bond lengths are kept fixed.  Water molecules are kept rigid.')]) }}
+        </div>
+        <div class="form-group" id="constraintTolRow">
+        <label for="constraintTol">Constraint Error Tolerance</label>
+        {{ textfield('constraintTol', 'The maximum allowed relative error in constrained distance.') }}
+        </div>
     
     
         <h2>Integrator</h2>
-        <table>
-        <tr>
-        <td>Step Size</td>
-        <td>{{ textfield('dt', 'The size of the time steps used by the integrator.') }} ps</td>
-        </tr>
-        <tr>
-        <td>Statistical Ensemble</td>
-        <td>{{ choice('ensemble', [
+        <div class="form-group">
+        <label for="dt">Step Size (ps)</label>
+        {{ textfield('dt', 'The size of the time steps used by the integrator.') }}
+        </div>
+        <div class="form-group">
+        <label for="ensemble">Statistical Ensemble</label>
+        {{ choice('ensemble', [
             ('npt', 'Constant pressure, temperature', 'The simulation includes a thermostat and barostat to sample a constant pressure, constant temperature (NPT) ensemble.'),
             ('nvt', 'Constant volume, temperature', 'The simulation includes a thermostat so it samples a constant volume, constant temperature (NVT) ensemble.'),
-            ('nve', 'Constant volume, energy', 'The box volume and total energy are both held constant so the simulation samples a NVE ensemble.')]) }}</td>
-        </tr>
-        <tr id="temperatureRow">
-        <td>Temperature</td>
-        <td>{{ textfield('temperature', 'The temperature at which the system is simulated.') }} K</td>
-        </tr>
-        <tr id="frictionRow">
-        <td>Friction Coefficient</td>
-        <td>{{ textfield('friction', 'The friction coefficient coupling the system to the thermostat.') }} ps<sup>-1</sup></td>
-        </tr>
-        <tr id="pressureRow">
-        <td>Pressure</td>
-        <td>{{ textfield('pressure', 'The pressure at which the system is simulated.') }} atm</td>
-        </tr>
-        <tr id="barostatIntervalRow">
-        <td>Barostat Interval</td>
-        <td>{{ textfield('barostatInterval', 'The interval at which the barostat attempts to change the box volume, measured in time steps.') }} steps</td>
-        </tr>
-        </table>
+            ('nve', 'Constant volume, energy', 'The box volume and total energy are both held constant so the simulation samples a NVE ensemble.')]) }}
+        </div>
+        <div class="form-group" id="temperatureRow">
+        <label for="temperature">Temperature (K)</label>
+        {{ textfield('temperature', 'The temperature at which the system is simulated.') }}
+        </div>
+        <div class="form-group" id="frictionRow">
+        <label for="friction">Friction Coefficient (ps<sup>-1</sup>)</label>
+        {{ textfield('friction', 'The friction coefficient coupling the system to the thermostat.') }}
+        </div>
+        <div class="form-group" id="pressureRow">
+        <label for="pressure">Pressure (atm)</label>
+        {{ textfield('pressure', 'The pressure at which the system is simulated.') }}
+        </div>
+        <div class="form-group" id="barostatIntervalRow">
+        <label for="barostatInterval">Barostat Interval (steps)</label>
+        {{ textfield('barostatInterval', 'The interval at which the barostat attempts to change the box volume, measured in time steps.') }}
+        </div>
     
     
         <h2>Simulation</h2>
-        <table>
-        <tr>
-        <td>Simulation Length</td>
-        <td>{{ textfield('steps', 'The total length of the simulation, measured in time steps.') }} steps</td>
-        </tr>
-        <tr>
-        <td>Equilibration Steps</td>
-        <td>{{ textfield('equilibrationSteps', 'The number of time steps of equilibration to run before starting the main simulation.') }} steps</td>
-        </tr>
-        <tr>
-        <td>Platform</td>
-        <td>{{ choice('platform', [
+        <div class="form-group">
+        <label for="steps">Simulation Length (steps)</label>
+        {{ textfield('steps', 'The total length of the simulation, measured in time steps.') }}
+        </div>
+        <div class="form-group">
+        <label for="equilibrationSteps">Equilibration Length (steps)</label>
+        {{ textfield('equilibrationSteps', 'The number of time steps of equilibration to run before starting the main simulation.') }}
+        </div>
+        <div class="form-group">
+        <label for="platform">Platform</label>
+        {{ choice('platform', [
             ('Reference', 'Reference', 'The Reference platform is useful for testing, but not recommended for production simulations.'),
             ('CPU', 'CPU', 'Run the simulation on a conventional CPU'),
             ('CUDA', 'CUDA', 'Run the simulation on an NVIDIA GPU'),
-            ('OpenCL', 'OpenCL', 'The OpenCL platform on various kinds of hardware, including NVIDIA, AMD, and Intel GPUs')]) }}</td>
-        </tr>
-        <tr id="precisionRow">
-        <td>Precision</td>
-        <td>{{ choice('precision', [
+            ('OpenCL', 'OpenCL', 'The OpenCL platform on various kinds of hardware, including NVIDIA, AMD, and Intel GPUs')]) }}
+        </div>
+        <div class="form-group" id="precisionRow">
+        <label for="precision">Precision</label>
+        {{ choice('precision', [
             ('single', 'Single', 'Most calculations are done in single precision.  This is the fastest option.'),
             ('mixed', 'Mixed', 'Use a mix of single and double precision to give reasonably high performance, but better energy conservation than single precision.  This is recommended for NVE simulations.'),
-            ('double', 'Double', 'All calculations are done in double precision.  This can be very slow.')]) }}</td>
-        </tr>
-        <tr>
-            <td colspan="2"><label><input type="checkbox" name="writeDCD" id="writeDCD" oninput="optionChanged()" {{ 'checked' if session['writeDCD'] else '' }}> Save trajectory to a DCD file</label></td>
-        </tr>
-        <tr id="dcdFilenameRow">
-        <td>DCD Filename</td>
-        <td>{{ textfield('dcdFilename', 'The filename for the trajectory file.') }}</td>
-        </tr>
-        <tr id="dcdIntervalRow">
-        <td>DCD Output Interval</td>
-        <td>{{ textfield('dcdInterval', 'The interval at which to write frames to the trajectory, measured in time steps.') }} steps</td>
-        </tr>
-        <tr>
-        <td colspan="2"><label><input type="checkbox" name="writeData" id="writeData" oninput="optionChanged()" {{ 'checked' if session['writeData'] else '' }}> Save data to a log file</label></td>
-        </tr>
-        <tr id="dataFilenameRow">
-        <td>Data Filename</td>
-        <td>{{ textfield('dataFilename', 'The filename for the log file.') }}</td>
-        </tr>
-        <tr id="dataIntervalRow">
-        <td>Data Output Interval</td>
-        <td>{{ textfield('dataInterval', 'The interval at which to write frames to the log file, measured in time steps.') }} steps</td>
-        </tr>
-        <tr id="dataFieldsRow">
-        <td>Data to Write</td>
-        <td>
-        {{ datafieldbox('step', 'Step', 'The number of time steps completed.') }}
-        {{ datafieldbox('time', 'Time', 'The amount of time simulated so far.') }}
-        {{ datafieldbox('speed', 'Speed', 'The speed at which the simulation is running.') }}
-        {{ datafieldbox('progress', 'Progress', 'The fraction of the simulation completed so far.') }}
-        {{ datafieldbox('elapsedTime', 'Elapsed Time', 'The elapsed clock time so far.') }}
-        {{ datafieldbox('remainingTime', 'Remaining Time', 'An estimate of the remaining clock time needed to complete the simulation.') }}
-        {{ datafieldbox('potentialEnergy', 'Potential Energy', 'The current potential energy of the system.') }}
-        {{ datafieldbox('kineticEnergy', 'Kinetic Energy', 'The current kinetic energy of the system.') }}
-        {{ datafieldbox('totalEnergy', 'Total Energy', 'The current total energy of the system.') }}
-        {{ datafieldbox('temperature', 'Temperature', 'The instantaneous temperature of the system.') }}
-        {{ datafieldbox('volume', 'Volume', 'The current volume of the periodic box.') }}
-        {{ datafieldbox('density', 'Density', 'The current density of the system.') }}
-        </td>
-        </tr>
-        </table>
+            ('double', 'Double', 'All calculations are done in double precision.  This can be very slow.')]) }}
+        </div>
+        <div class="form-group">
+        <label><input type="checkbox" name="writeDCD" id="writeDCD" oninput="optionChanged()" {{ 'checked' if session['writeDCD'] else '' }}> Save trajectory to a DCD file</label>
+        </div>
+        <div id="dcdFileOptions">
+            <div class="form-group">
+            <label for="dcdFilename">DCD Filename</label>
+            {{ textfield('dcdFilename', 'The filename for the trajectory file.') }}
+            </div>
+            <div class="form-group">
+            <label for="dcdInterval">DCD Output Interval (steps)</label>
+            {{ textfield('dcdInterval', 'The interval at which to write frames to the trajectory, measured in time steps.') }}
+            </div>
+        </div>
+        <div class="form-group">
+        <label><input type="checkbox" name="writeData" id="writeData" oninput="optionChanged()" {{ 'checked' if session['writeData'] else '' }}> Save data to a log file</label>
+        </div>
+        <div id="logFileOptions">
+            <div class="form-group">
+            <label for="davaFilename">Data Filename</label>
+            {{ textfield('dataFilename', 'The filename for the log file.') }}
+            </div>
+            <div class="form-group">
+            <label for="dataInterval">Data Output Interval (steps)</label>
+            {{ textfield('dataInterval', 'The interval at which to write frames to the log file, measured in time steps.') }}
+            </div>
+            <div class="form-group">
+            <label>Data to Write</label>
+            <div>
+            {{ datafieldbox('step', 'Step', 'The number of time steps completed.') }}
+            {{ datafieldbox('time', 'Time', 'The amount of time simulated so far.') }}
+            {{ datafieldbox('speed', 'Speed', 'The speed at which the simulation is running.') }}
+            {{ datafieldbox('progress', 'Progress', 'The fraction of the simulation completed so far.') }}
+            {{ datafieldbox('elapsedTime', 'Elapsed Time', 'The elapsed clock time so far.') }}
+            {{ datafieldbox('remainingTime', 'Remaining Time', 'An estimate of the remaining clock time needed to complete the simulation.') }}
+            {{ datafieldbox('potentialEnergy', 'Potential Energy', 'The current potential energy of the system.') }}
+            {{ datafieldbox('kineticEnergy', 'Kinetic Energy', 'The current kinetic energy of the system.') }}
+            {{ datafieldbox('totalEnergy', 'Total Energy', 'The current total energy of the system.') }}
+            {{ datafieldbox('temperature', 'Temperature', 'The instantaneous temperature of the system.') }}
+            {{ datafieldbox('volume', 'Volume', 'The current volume of the periodic box.') }}
+            {{ datafieldbox('density', 'Density', 'The current density of the system.') }}
+            </div>
+            </div>
+        </div>
     </form>
-</td>
-<td><pre><code id="script"></code></pre></td>
-</tr>
-</table>
+</div>
+<div class="col-md-8"><pre><code id="script"></code></pre></div>
+</div>
 
 <script>
 function optionChanged() {
     // Update UI elements.
     
     nonbondedMethod = document.getElementById("nonbondedMethod").value;
-    document.getElementById("cutoffRow").style.display = (nonbondedMethod == 'NoCutoff' ? 'none' : 'table-row');
-    document.getElementById("ewaldTolRow").style.display = (nonbondedMethod == 'PME' ? 'table-row' : 'none');
+    document.getElementById("cutoffRow").hidden = (nonbondedMethod == 'NoCutoff');
+    document.getElementById("ewaldTolRow").hidden = (nonbondedMethod != 'PME');
     constraints = document.getElementById("constraints").value;
-    document.getElementById("constraintTolRow").style.display = (constraints == 'none' ? 'none' : 'table-row');
+    document.getElementById("constraintTolRow").hidden = (constraints == 'none');
     ensemble = document.getElementById("ensemble").value;
-    document.getElementById("temperatureRow").style.display = (ensemble == 'nve' ? 'none' : 'table-row');
-    document.getElementById("frictionRow").style.display = (ensemble == 'nve' ? 'none' : 'table-row');
-    document.getElementById("pressureRow").style.display = (ensemble == 'npt' ? 'table-row' : 'none');
-    document.getElementById("barostatIntervalRow").style.display = (ensemble == 'npt' ? 'table-row' : 'none');
+    document.getElementById("temperatureRow").hidden = (ensemble == 'nve');
+    document.getElementById("frictionRow").hidden = (ensemble == 'nve');
+    document.getElementById("pressureRow").hidden = (ensemble != 'npt');
+    document.getElementById("barostatIntervalRow").hidden = (ensemble != 'npt');
     platform = document.getElementById("platform").value;
-    document.getElementById("precisionRow").style.display = (platform == 'CUDA' || platform == 'OpenCL' ? 'table-row' : 'none');
+    document.getElementById("precisionRow").hidden = (platform != 'CUDA' && platform != 'OpenCL');
     writeDCD = document.getElementById("writeDCD").checked;
-    document.getElementById("dcdFilenameRow").style.display = (writeDCD ? 'table-row' : 'none');
-    document.getElementById("dcdIntervalRow").style.display = (writeDCD ? 'table-row' : 'none');
+    document.getElementById("dcdFileOptions").hidden = !writeDCD;
     writeData = document.getElementById("writeData").checked;
-    document.getElementById("dataFilenameRow").style.display = (writeData ? 'table-row' : 'none');
-    document.getElementById("dataIntervalRow").style.display = (writeData ? 'table-row' : 'none');
+    document.getElementById("logFileOptions").hidden = !writeData;
     
     // Submit the form.
     

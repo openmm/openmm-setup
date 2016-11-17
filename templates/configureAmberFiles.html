@@ -3,11 +3,15 @@
 {% block body %}
 Select the input files.
 <p/>
-<form method="get" action="{{ url_for('configureFiles') }}">
-    Prmtop File Name <input type="text" name="prmtopFilename"/>
-    <p/>
-    Inpcrd File Name <input type="text" name="inpcrdFilename"/>
-    <p/>
-    <input type="submit" value="Continue"/>
+<form method="get" action="{{ url_for('configureFiles') }}" class="form-horizontal">
+    <div class="form-group">
+    <label for="prmtopFilename" class="control-label col-md-2">Prmtop File Name</label>
+    <div class="col-md-10"><input type="text" name="prmtopFilename" id="prmtopFilename" class="form-control"/></div>
+    </div>
+    <div class="form-group">
+    <label for="inpcrdFilename" class="control-label col-md-2">Inpcrd File Name</label>
+    <div class="col-md-10"><input type="text" name="inpcrdFilename" id="inpcrdFilename" class="form-control"/></div>
+    </div>
+    <input type="submit" value="Continue" class="btn"/>
 </form>
 {% endblock %}

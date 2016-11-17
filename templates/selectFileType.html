@@ -5,16 +5,16 @@
 What kind of file or files do you have describing the system to simulate?
 <p/>
 <form method="get" action="{{ url_for('selectFiles') }}">
-    <input type="radio" name="type" value="pdb" checked/> PDB
+    <label class="control-label"><input type="radio" name="type" value="pdb" checked/> PDB</label>
     <p style="margin-left:50px">A PDB file</p>
-    <input type="radio" name="type" value="pdbx"/> PDBx/mmCIF
+    <label class="control-label"><input type="radio" name="type" value="pdbx"/> PDBx/mmCIF</label>
     <p style="margin-left:50px">A PDBx/mmCIF file</p>
-    <input type="radio" name="type" value="amber"/> Amber
+    <label class="control-label"><input type="radio" name="type" value="amber"/> Amber</label>
     <p style="margin-left:50px">Amber prmtop and inpcrd files</p>
-    <input type="radio" name="type" value="charmm"/> CHARMM
+    <label class="control-label"><input type="radio" name="type" value="charmm"/> CHARMM</label>
     <p style="margin-left:50px">A CHARMM psf file, along with the force field definition in CHARMM format</p>
-    <input type="radio" name="type" value="gromacs"/> Gromacs
+    <label class="control-label"><input type="radio" name="type" value="gromacs"/> Gromacs</label>
     <p style="margin-left:50px">Gromacs gro and top files</p>
-    <input type="submit" value="Continue"/>
+    <input type="submit" value="Continue" class="btn"/>
 </form>
 {% endblock %}

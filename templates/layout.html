@@ -2,14 +2,20 @@
 <html>
     <head>
         <title>OpenMM Setup: {% block title %}{% endblock %}</title>
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
     </head>
     <body>
-        <noscript>
-            <div style='color:red'>
-                <h1>Javascript Disabled</h1>
-                This application requires Javascript to operate.  Please enable Javascript in your browser, then reload this page.
-            </div>
-        </noscript>
-        {% block body %}{% endblock %}
+        <div class="container-fluid">
+            <noscript>
+                <div style='color:red'>
+                    <h1>Javascript Disabled</h1>
+                    This application requires Javascript to operate.  Please enable Javascript in your browser, then reload this page.
+                </div>
+            </noscript>
+            {% block body %}{% endblock %}
+        </div>
     </body>
 </html>

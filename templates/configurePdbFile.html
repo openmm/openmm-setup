@@ -3,21 +3,25 @@
 {% block body %}
 Select the input file and options for how to model it.
 <p/>
-<form method="get" action="{{ url_for('configureFiles') }}">
-    File Name <input type="text" name="filename"/>
-    <p/>
-    Force Field
-    <select name="forcefield" id="forcefield" onchange="optionChanged()">
+<form method="get" action="{{ url_for('configureFiles') }}" class="form-horizontal">
+    <div class="form-group">
+    <label for="filename" class="control-label col-md-2">File Name</label>
+    <div class="col-md-10"><input type="text" name="filename" id="filename" class="form-control"/></div>
+    </div>
+    <div class="form-group">
+    <label for="forcefield" class="control-label col-md-2">Force Field</label>
+    <div class="col-md-10"><select name="forcefield" id="forcefield" class="form-control" onchange="optionChanged()">
         <option value="amber99sb.xml">AMBER99SB</option>
         <option value="amber99sbildn.xml" selected>AMBER99SB-ILDN</option>
         <option value="amber03.xml">AMBER03</option>
         <option value="amber10.xml">AMBER10</option>
         <option value="amoeba2013.xml">AMOEBA 2013</option>
         <option value="charmm_polar_2013.xml">CHARMM Polar 2013</option>
-    </select>
-    <p id="waterModelRow">
-    Water Model
-    <select name="waterModel" id="waterModel">
+    </select></div>
+    </div>
+    <div id="waterModelRow" class="form-group">
+    <label for="waterModel" class="control-label col-md-2">Water Model</label>
+    <div class="col-md-10"><select name="waterModel" id="waterModel" class="form-control">
         <option value="tip3p.xml">TIP3P</option>
         <option value="tip3pfb.xml" selected>TIP3P-FB</option>
         <option value="tip4pew.xml">TIP4P-Ew</option>
@@ -25,16 +29,16 @@ Select the input file and options for how to model it.
         <option value="tip5p.xml">TIP5P</option>
         <option value="spce.xml">SPC/E</option>
         <option value="implicit">OBC (implicit solvent)</option>
-    </select>
-    </p>
-    <p id="amoebaWaterModelRow" hidden>
-    Water Model
-    <select name="amoebaWaterModel" id="amoebaWaterModel">
+    </select></div>
+    </div>
+    <div id="amoebaWaterModelRow" class="form-group" hidden>
+    <label for="amoebaWaterModel" class="control-label col-md-2">Water Model</label>
+    <div class="col-md-10"><select name="amoebaWaterModel" id="amoebaWaterModel" class="form-control">
         <option value="explicit">Explicit</option>
         <option value="implicit">Implicit</option>
-    </select>
-    </p>
-    <input type="submit" value="Continue"/>
+    </select></div>
+    </div>
+    <input type="submit" value="Continue" class="btn"/>
 </form>
 {% if 'forcefield' in session %}
 <script>
