@@ -1,0 +1,13 @@
+{% extends "layout.html" %}
+{% block title %}Select Input Files{% endblock %}
+{% block body %}
+Select the input files.
+<p/>
+<form method="get" action="{{ url_for('configureFiles') }}">
+    Prmtop File Name <input type="text" name="prmtopFilename"/>
+    <p/>
+    Inpcrd File Name <input type="text" name="inpcrdFilename"/>
+    <p/>
+    <input type="submit" value="Continue"/>
+</form>
+{% endblock %}

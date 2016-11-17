@@ -7,7 +7,7 @@ Select the input file and options for how to model it.
     File Name <input type="text" name="filename"/>
     <p/>
     Force Field
-    <select name="forcefield" id="forcefield">
+    <select name="forcefield" id="forcefield" onchange="optionChanged()">
         <option value="amber99sb.xml">AMBER99SB</option>
         <option value="amber99sbildn.xml" selected>AMBER99SB-ILDN</option>
         <option value="amber03.xml">AMBER03</option>
@@ -15,7 +15,7 @@ Select the input file and options for how to model it.
         <option value="amoeba2013.xml">AMOEBA 2013</option>
         <option value="charmm_polar_2013.xml">CHARMM Polar 2013</option>
     </select>
-    <p/>
+    <p id="waterModelRow">
     Water Model
     <select name="waterModel" id="waterModel">
         <option value="tip3p.xml">TIP3P</option>
@@ -26,12 +26,26 @@ Select the input file and options for how to model it.
         <option value="spce.xml">SPC/E</option>
         <option value="implicit">OBC (implicit solvent)</option>
     </select>
-    <p/>
+    </p>
+    <p id="amoebaWaterModelRow" hidden>
+    Water Model
+    <select name="amoebaWaterModel" id="amoebaWaterModel">
+        <option value="explicit">Explicit</option>
+        <option value="implicit">Implicit</option>
+    </select>
+    </p>
     <input type="submit" value="Continue"/>
 </form>
 {% if 'forcefield' in session %}
 <script>
-    document.getElementById("forcefield").value = {{ session['forcefield'] }}
+function optionChanged() {
+    // Update UI elements.
+
+    forcefield = document.getElementById("forcefield").value;
+    document.getElementById("waterModelRow").hidden = (forcefield == 'amoeba2013.xml' || forcefield == 'charmm_polar_2013.xml');
+    document.getElementById("amoebaWaterModelRow").hidden = (forcefield != 'amoeba2013.xml');
+}
+optionChanged()
 </script>
 {% endif %}
 {% endblock %}

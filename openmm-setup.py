@@ -20,6 +20,8 @@ def showConfigureFiles():
         fileType = session['fileType']
         if fileType in ('pdb', 'pdbx'):
             return render_template('configurePdbFile.html')
+        elif fileType == 'amber':
+            return render_template('configureAmberFiles.html')
     except:
         app.logger.error('Error displaying configure files page', exc_info=True)
     # The file type is invalid, so send them back to the select file type page.
@@ -32,8 +34,12 @@ def configureFiles():
         session['filename'] = request.args.get('filename', '')
         session['forcefield'] = request.args.get('forcefield', '')
         session['waterModel'] = request.args.get('waterModel', '')
-        configureDefaultOptions()
-        return showSimulationOptions()
+        session['amoebaWaterModel'] = request.args.get('amoebaWaterModel', '')
+    elif fileType == 'amber':
+        session['prmtopFilename'] = request.args.get('prmtopFilename', '')
+        session['inpcrdFilename'] = request.args.get('inpcrdFilename', '')
+    configureDefaultOptions()
+    return showSimulationOptions()
 
 def showSimulationOptions():
     return render_template('simulationOptions.html', title='Simulation Options')
@@ -89,21 +95,31 @@ def createScript():
     # Input files
     
     script.append('\n# Input Files\n')
-    if session['fileType'] == 'pdb':
+    fileType = session['fileType']
+    if fileType == 'pdb':
         script.append("pdb = PDBFile('%s')" % session['filename'])
-    elif session['fileType'] == 'pdbx':
+    elif fileType == 'pdbx':
         script.append("pdbx = PDBxFile('%s')" % session['filename'])
-    if session['fileType'] in ('pdb', 'pdbx'):
+    if fileType in ('pdb', 'pdbx'):
         forcefield = session['forcefield']
         water = session['waterModel']
-        if water == 'implicit':
+        if forcefield == 'amoeba2013.xml':
+            water = ('amoeba2013_gk.xml' if session['amoebaWaterModel'] == 'implicit' else None)
+        elif forcefield == 'charmm_polar_2013.xml':
+            water = None
+        elif water == 'implicit':
             models = {'amber99sb.xml': 'amber99_obc.xml',
                       'amber99sbildn.xml': 'amber99_obc.xml',
                       'amber03.xml': 'amber03_obc.xml',
-                      'amber10.xml': 'amber10_obc.xml',
-                      'amoeba2013.xml': 'amoeba2013_gk.xml'}
+                      'amber10.xml': 'amber10_obc.xml'}
             water = models[forcefield]
-        script.append("forcefield = ForceField('%s', '%s')" % (forcefield, water))
+        if water is None:
+            script.append("forcefield = ForceField('%s')" % forcefield)
+        else:
+            script.append("forcefield = ForceField('%s', '%s')" % (forcefield, water))
+    elif fileType == 'amber':
+        script.append("prmtop = AmberPrmtopFile('%s')" % session['prmtopFilename'])
+        script.append("inpcrd = AmberInpcrdFile('%s')" % session['inpcrdFilename'])
 
     # System configuration
 
@@ -141,28 +157,40 @@ def createScript():
     script.append('\n# Simulation Options\n')
     script.append('steps = %s' % session['steps'])
     script.append('equilibrationSteps = %s' % session['equilibrationSteps'])
-    script.append('platform = %s' % session['platform'])
+    script.append("platform = Platform.getPlatformByName('%s')" % session['platform'])
     if session['platform'] in ('CUDA', 'OpenCL'):
         script.append("platformProperties = {'Precision': '%s'}" % session['precision'])
     if session['writeDCD']:
         script.append("dcdReporter = DCDReporter('%s', %s)" % (session['dcdFilename'], session['dcdInterval']))
     if session['writeData']:
         args = ', '.join('%s=True' % field for field in session['dataFields'])
-        script.append("dataReporter = StateDataReporter('%s', %s," % (session['dataFilename'], session['dataInterval']))
-        script.append("    %s, separator='\\t', totalSteps=%s)" % (args, session['steps']))
+        script.append("dataReporter = StateDataReporter('%s', %s, totalSteps=%s," % (session['dataFilename'], session['dataInterval'], session['steps']))
+        script.append("    %s, separator='\\t')" % args)
     
     # Prepare the simulation
     
     script.append('\n# Prepare the Simulation\n')
     script.append("print('Building system...')")
-    if session['fileType'] == 'pdb':
+    if fileType == 'pdb':
         script.append('topology = pdb.topology')
         script.append('positions = pdb.positions')
-    elif session['fileType'] == 'pdbx':
+    elif fileType == 'pdbx':
         script.append('topology = pdbx.topology')
         script.append('positions = pdbx.positions')
-    script.append('system = forcefield.createSystem(topology, nonbondedMethod=nonbondedMethod,%s' % (' nonbondedCutoff=nonbondedCutoff,' if nonbondedMethod != 'NoCutoff' else ''))
-    script.append('    constraints=constraints, rigidWater=rigidWater%s)' % (', ewaldErrorTolerance=ewaldErrorTolerance' if nonbondedMethod == 'PME' else ''))
+    elif fileType == 'amber':
+        script.append('topology = prmtop.topology')
+        script.append('positions = inpcrd.positions')
+    if fileType in ('pdb', 'pdbx') and (forcefield == 'charmm_polar_2013.xml' or water in ('tip4pew.xml', 'tip4pfb.xml', 'tip5p.xml')):
+        script.append('modeller = Modeller(topology, positions)')
+        script.append('modeller.addExtraParticles(forcefield)')
+        script.append('topology = modeller.topology')
+        script.append('positions = modeller.positions')
+    if fileType in ('pdb', 'pdbx'):
+        script.append('system = forcefield.createSystem(topology, nonbondedMethod=nonbondedMethod,%s' % (' nonbondedCutoff=nonbondedCutoff,' if nonbondedMethod != 'NoCutoff' else ''))
+        script.append('    constraints=constraints, rigidWater=rigidWater%s)' % (', ewaldErrorTolerance=ewaldErrorTolerance' if nonbondedMethod == 'PME' else ''))
+    elif fileType == 'amber':
+        script.append('system = prmtop.createSystem(nonbondedMethod=nonbondedMethod,%s' % (' nonbondedCutoff=nonbondedCutoff,' if nonbondedMethod != 'NoCutoff' else ''))
+        script.append('    constraints=constraints, rigidWater=rigidWater%s)' % (', ewaldErrorTolerance=ewaldErrorTolerance' if nonbondedMethod == 'PME' else ''))
     if ensemble == 'npt':
         script.append('system.addForce(MonteCarloBarostat(pressure, temperature, barostatInterval))')
     if ensemble == 'nve':
