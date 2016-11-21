@@ -1,17 +1,37 @@
 {% extends "layout.html" %}
+
+{% macro fileinput(id) %}
+    <div class="input-group">
+        <label class="btn btn-default btn-file input-group-addon">
+            Browse... <input type="file" name="{{ id }}" id="{{ id }}" style="display: none" onchange="optionChanged()"/>
+        </label>
+        <span id="{{ id }}_label" class="form-control"/>
+    </div>
+{% endmacro %}
+
 {% block title %}Select Input Files{% endblock %}
 {% block body %}
 Select the input files.
 <p/>
-<form method="get" action="{{ url_for('configureFiles') }}" class="form-horizontal">
+<form method="post" enctype="multipart/form-data" action="{{ url_for('configureFiles') }}" class="form-horizontal">
     <div class="form-group">
-    <label for="prmtopFilename" class="control-label col-md-2">Prmtop File Name</label>
-    <div class="col-md-10"><input type="text" name="prmtopFilename" id="prmtopFilename" class="form-control"/></div>
+    <label for="prmtopFile" class="control-label col-md-2">Prmtop File Name</label>
+    <div class="col-md-10">{{ fileinput('prmtopFile') }}</div>
     </div>
     <div class="form-group">
-    <label for="inpcrdFilename" class="control-label col-md-2">Inpcrd File Name</label>
-    <div class="col-md-10"><input type="text" name="inpcrdFilename" id="inpcrdFilename" class="form-control"/></div>
+    <label for="inpcrdFile" class="control-label col-md-2">Inpcrd File Name</label>
+    <div class="col-md-10">{{ fileinput('inpcrdFile') }}</div>
     </div>
-    <input type="submit" value="Continue" class="btn"/>
+    <input type="submit" value="Continue" id="continue" class="btn" disabled="true"/>
 </form>
+<script>
+function optionChanged() {
+    // Update UI elements.
+
+    document.getElementById("prmtopFile_label").textContent = document.getElementById("prmtopFile").value
+    document.getElementById("inpcrdFile_label").textContent = document.getElementById("inpcrdFile").value
+    document.getElementById('continue').disabled = !document.getElementById("prmtopFile").value || !document.getElementById("inpcrdFile").value;
+}
+optionChanged()
+</script>
 {% endblock %}

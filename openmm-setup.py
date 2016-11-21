@@ -1,10 +1,24 @@
 import simtk.openmm.app as app
-from flask import Flask, request, session, g, redirect, url_for, abort, render_template, flash
+from flask import Flask, request, session, g, redirect, url_for, abort, render_template, make_response, send_file
+from werkzeug.utils import secure_filename
 import datetime
+import shutil
+import tempfile
+import zipfile
 
 app = Flask(__name__)
 app.config.from_object(__name__)
 app.config.update({'SECRET_KEY':'development key'})
+
+uploadedFiles = {}
+
+def saveUploadedFiles():
+    uploadedFiles.clear()
+    for key in request.files:
+        file = request.files[key]
+        temp = tempfile.TemporaryFile()
+        shutil.copyfileobj(file, temp)
+        uploadedFiles[key] = (temp, secure_filename(file.filename))
 
 @app.route('/')
 def showSelectFileType():
@@ -27,17 +41,22 @@ def showConfigureFiles():
     # The file type is invalid, so send them back to the select file type page.
     return showSelectFileType()
 
-@app.route('/configureFiles')
+@app.route('/configureFiles', methods=['POST'])
 def configureFiles():
     fileType = session['fileType']
     if fileType in ('pdb', 'pdbx'):
-        session['filename'] = request.args.get('filename', '')
-        session['forcefield'] = request.args.get('forcefield', '')
-        session['waterModel'] = request.args.get('waterModel', '')
-        session['amoebaWaterModel'] = request.args.get('amoebaWaterModel', '')
+        if 'file' not in request.files or request.files['file'].filename == '':
+            # They didn't select a file.  Send them back.
+            return showConfigureFiles()
+        saveUploadedFiles()
+        session['forcefield'] = request.form.get('forcefield', '')
+        session['waterModel'] = request.form.get('waterModel', '')
+        session['amoebaWaterModel'] = request.form.get('amoebaWaterModel', '')
     elif fileType == 'amber':
-        session['prmtopFilename'] = request.args.get('prmtopFilename', '')
-        session['inpcrdFilename'] = request.args.get('inpcrdFilename', '')
+        if 'prmtopFile' not in request.files or request.files['prmtopFile'].filename == '' or 'inpcrdFile' not in request.files or request.files['inpcrdFile'].filename == '':
+            # They didn't select a file.  Send them back.
+            return showConfigureFiles()
+        saveUploadedFiles()
     configureDefaultOptions()
     return showSimulationOptions()
 
@@ -52,6 +71,24 @@ def setSimulationOptions():
     session['writeData'] = 'writeData' in request.form
     session['dataFields'] = request.form.getlist('dataFields')
     return createScript()
+
+@app.route('/downloadScript')
+def downloadScript():
+    response = make_response(createScript())
+    response.headers['Content-Disposition'] = 'attachment; filename="run_openmm_simulation.py"'
+    return response
+
+@app.route('/downloadPackage')
+def downloadPackage():
+    temp = tempfile.NamedTemporaryFile()
+    with zipfile.ZipFile(temp, 'w', zipfile.ZIP_DEFLATED) as zip:
+        zip.writestr('openmm_simulation/run_openmm_simulation.py', createScript())
+        for key in uploadedFiles:
+            file, name = uploadedFiles[key]
+            file.seek(0, 0)
+            zip.writestr('openmm_simulation/%s' % name, file.read())
+    temp.seek(0, 0)
+    return send_file(temp, 'application/zip', True, 'openmm_simulation.zip', cache_timeout=0)
 
 def configureDefaultOptions():
     """Select default options based on the file format and force field."""
@@ -97,9 +134,9 @@ def createScript():
     script.append('\n# Input Files\n')
     fileType = session['fileType']
     if fileType == 'pdb':
-        script.append("pdb = PDBFile('%s')" % session['filename'])
+        script.append("pdb = PDBFile('%s')" % uploadedFiles['file'][1])
     elif fileType == 'pdbx':
-        script.append("pdbx = PDBxFile('%s')" % session['filename'])
+        script.append("pdbx = PDBxFile('%s')" % uploadedFiles['file'][1])
     if fileType in ('pdb', 'pdbx'):
         forcefield = session['forcefield']
         water = session['waterModel']
@@ -118,8 +155,8 @@ def createScript():
         else:
             script.append("forcefield = ForceField('%s', '%s')" % (forcefield, water))
     elif fileType == 'amber':
-        script.append("prmtop = AmberPrmtopFile('%s')" % session['prmtopFilename'])
-        script.append("inpcrd = AmberInpcrdFile('%s')" % session['inpcrdFilename'])
+        script.append("prmtop = AmberPrmtopFile('%s')" % uploadedFiles['prmtopFile'][1])
+        script.append("inpcrd = AmberInpcrdFile('%s')" % uploadedFiles['inpcrdFile'][1])
 
     # System configuration
 

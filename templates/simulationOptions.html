@@ -18,9 +18,9 @@
 {% endmacro %}
 
 {% block body %}
-<div class="row">
-<div class="col-md-4">
-    <form method="post" id="optionsForm" action="{{ url_for('setSimulationOptions') }}">
+<form method="post" id="optionsForm" action="{{ url_for('setSimulationOptions') }}">
+    <div class="row">
+    <div class="col-md-4">
         <ul class="nav nav-tabs">
             <li class="active"><a data-toggle="tab" href="#system">System</a></li>
             <li><a data-toggle="tab" href="#integrator">Integrator</a></li>
@@ -176,10 +176,20 @@
             </div>
             </div>
         </div>
-    </form>
-</div>
-<div class="col-md-8"><pre><code id="script" style="overflow:scroll"></code></pre></div>
-</div>
+    </div>
+    <div class="col-md-8">
+        <div class="form-group">
+            <button type="button" class="btn btn-default" onclick="window.open('{{ url_for('downloadScript') }}')"
+                title="Download the script.  To run the simulation, put the script in the directory containing the input files and execute it.">Download Script</button>
+            <button type="button" class="btn btn-default" onclick="window.open('{{ url_for('downloadPackage') }}')"
+                title="Download an archive containing both the script and the input files.  To run the simulation, expand the archive and execute the script.">Download All Files</button>
+            <button type="button" class="btn btn-default"
+                title="Run the simulation now, displaying results in your browser.">Run Simulation</button>
+        </div>
+        <pre><code id="script" style="overflow:scroll"></code></pre>
+    </div>
+    </div>
+</form>
 
 <script>
 function optionChanged() {

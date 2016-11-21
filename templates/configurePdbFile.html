@@ -1,12 +1,22 @@
 {% extends "layout.html" %}
+
+{% macro fileinput(id) %}
+    <div class="input-group">
+        <label class="btn btn-default btn-file input-group-addon">
+            Browse... <input type="file" name="{{ id }}" id="{{ id }}" style="display: none" onchange="optionChanged()"/>
+        </label>
+        <span id="{{ id }}_label" class="form-control"/>
+    </div>
+{% endmacro %}
+
 {% block title %}Select Input Files{% endblock %}
 {% block body %}
 Select the input file and options for how to model it.
 <p/>
-<form method="get" action="{{ url_for('configureFiles') }}" class="form-horizontal">
+<form method="post" enctype="multipart/form-data" action="{{ url_for('configureFiles') }}" class="form-horizontal">
     <div class="form-group">
-    <label for="filename" class="control-label col-md-2">File Name</label>
-    <div class="col-md-10"><input type="text" name="filename" id="filename" class="form-control"/></div>
+    <label for="filename" class="control-label col-md-2">Input File</label>
+        <div class="col-md-10">{{ fileinput('file') }}</div>
     </div>
     <div class="form-group">
     <label for="forcefield" class="control-label col-md-2">Force Field</label>
@@ -38,7 +48,7 @@ Select the input file and options for how to model it.
         <option value="implicit">Implicit</option>
     </select></div>
     </div>
-    <input type="submit" value="Continue" class="btn"/>
+    <input type="submit" value="Continue" id="continue" class="btn" disabled="true"/>
 </form>
 {% if 'forcefield' in session %}
 <script>
@@ -48,6 +58,8 @@ function optionChanged() {
     forcefield = document.getElementById("forcefield").value;
     document.getElementById("waterModelRow").hidden = (forcefield == 'amoeba2013.xml' || forcefield == 'charmm_polar_2013.xml');
     document.getElementById("amoebaWaterModelRow").hidden = (forcefield != 'amoeba2013.xml');
+    document.getElementById("file_label").textContent = document.getElementById("file").value
+    document.getElementById('continue').disabled = !document.getElementById("file").value;
 }
 optionChanged()
 </script>
