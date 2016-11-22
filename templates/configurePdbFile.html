@@ -50,7 +50,6 @@ Select the input file and options for how to model it.
     </div>
     <input type="submit" value="Continue" id="continue" class="btn" disabled="true"/>
 </form>
-{% if 'forcefield' in session %}
 <script>
 function optionChanged() {
     // Update UI elements.
@@ -63,5 +62,4 @@ function optionChanged() {
 }
 optionChanged()
 </script>
-{% endif %}
 {% endblock %}
