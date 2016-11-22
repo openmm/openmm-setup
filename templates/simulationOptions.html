@@ -184,10 +184,29 @@
             <button type="button" class="btn btn-default" onclick="window.open('{{ url_for('downloadPackage') }}')"
                 title="Download an archive containing both the script and the input files.  To run the simulation, expand the archive and execute the script.">Download All Files</button>
             <button type="button" class="btn btn-default"
-                title="Run the simulation now, displaying results in your browser.">Run Simulation</button>
+                title="Run the simulation now, displaying results in your browser." onclick="runSimulation()">Run Simulation</button>
         </div>
         <pre><code id="script" style="overflow:scroll"></code></pre>
     </div>
+    </div>
+
+    <div id="illegalPlatformModal" class="modal fade" role="dialog">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h4 class="modal-title">Platform Not Available</h4>
+          </div>
+          <div class="modal-body">
+            <p>
+                You have selected the <span id="selectedPlatformName"></span> platform, which is not available on this computer.
+                To run the simulation on this computer, select one of the following platforms: <span id="availablePlatforms"></span>.
+            </p>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+          </div>
+        </div>
+      </div>
     </div>
 </form>
 
@@ -222,6 +241,23 @@ function optionChanged() {
     });
     request.open("POST", "{{ url_for('setSimulationOptions') }}");
     request.send(data);
+}
+
+function runSimulation() {
+    platforms = [
+        {% for i in range(mm.Platform.getNumPlatforms()) %}
+            '{{ mm.Platform.getPlatform(i).getName() }}',
+        {% endfor %}
+    ];
+    platform = document.getElementById("platform").value;
+    if (platforms.indexOf(platform) == -1) {
+        document.getElementById("selectedPlatformName").textContent = platform;
+        document.getElementById("availablePlatforms").textContent = platforms.join(', ');
+        $('a[href="#simulation"]').tab('show');
+        $('#illegalPlatformModal').modal('show');
+    }
+    else
+        window.open('{{ url_for('showRunSimulation') }}');
 }
 
 // Configure the page based on initial values
