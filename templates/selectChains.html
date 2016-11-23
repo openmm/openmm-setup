@@ -1,0 +1,42 @@
+{% extends "layout.html" %}
+{% block title %}Select Chains{% endblock %}
+{% block body %}
+This PDB file contains {{ chains|length }} chains.  Select which ones to include.
+<p/>
+<form method="post" action="{{ url_for('selectChains') }}">
+    <table class="table" id="table">
+        <tr><th>Chain</th><th># Residues</th><th>Content</th><th>Include?</th></tr>
+        {% for chain in chains %}
+            <tr>
+                <td>{{ chain[0] }}</td>
+                <td>{{ chain[1] }}</td>
+                <td>{{ chain[2] }}</td>
+                <td><input type="checkbox" name="include" value="{{ loop.index0 }}" onchange="optionChanged()" checked></td>
+            </tr>
+        {% endfor %}
+    </table>
+    <div class="form-group">
+        <button type="button" id="start" class="btn btn-default" onclick="setCheckboxes(true)">Select All</button>
+        <button type="button" id="start" class="btn btn-default" onclick="setCheckboxes(false)">Select None</button>
+    </div>
+    <input type="submit" value="Continue" id="continue" class="btn"/>
+</form>
+
+<script>
+function optionChanged() {
+    // Update UI elements.
+
+    checkboxes = document.getElementById("table").getElementsByTagName("input")
+    var any = false
+    for (var i = 0; i < checkboxes.length; i++)
+        any |= checkboxes[i].checked
+    document.getElementById('continue').disabled = !any;
+}
+function setCheckboxes(selected) {
+    checkboxes = document.getElementById("table").getElementsByTagName("input")
+    for (var i = 0; i < checkboxes.length; i++)
+        checkboxes[i].checked = selected
+    optionChanged()
+}
+</script>
+{% endblock %}

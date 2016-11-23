@@ -181,6 +181,10 @@
         <div class="form-group">
             <button type="button" class="btn btn-default" onclick="window.open('{{ url_for('downloadScript') }}')"
                 title="Download the script.  To run the simulation, put the script in the directory containing the input files and execute it.">Download Script</button>
+            {% if 'cleanup' in session and session['cleanup'] == 'yes' %}
+            <button type="button" class="btn btn-default" onclick="window.open('{{ url_for('downloadPDB') }}')"
+                title="Download the processed PDB file.  This is the file the script loads as its input.">Download Processed PDB File</button>
+            {% endif %}
             <button type="button" class="btn btn-default" onclick="window.open('{{ url_for('downloadPackage') }}')"
                 title="Download an archive containing both the script and the input files.  To run the simulation, expand the archive and execute the script.">Download All Files</button>
             <button type="button" class="btn btn-default"

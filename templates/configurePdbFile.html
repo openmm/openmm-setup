@@ -48,6 +48,11 @@ Select the input file and options for how to model it.
         <option value="implicit">Implicit</option>
     </select></div>
     </div>
+    <p>PDB files often need to be cleaned up before they can be simulated.  For example, you may need to
+    add missing atoms, remove unwanted chains, or add a water box.  Do you want to do this now?</p>
+    <div style="margin-left:50px"><label class="control-label"><input type="radio" name="cleanup" value="no" checked/> No.</label> My file is all ready to simulate.</div>
+    <div style="margin-left:50px"><label class="control-label"><input type="radio" name="cleanup" value="yes"/> Yes.</label> Let's clean it up now.</div>
+    <br/>
     <input type="submit" value="Continue" id="continue" class="btn" disabled="true"/>
 </form>
 <script>
