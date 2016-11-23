@@ -22,10 +22,12 @@ simulationProcess = None
 def saveUploadedFiles():
     uploadedFiles.clear()
     for key in request.files:
-        file = request.files[key]
-        temp = tempfile.TemporaryFile()
-        shutil.copyfileobj(file, temp)
-        uploadedFiles[key] = (temp, secure_filename(file.filename))
+        filelist = []
+        for file in request.files.getlist(key):
+            temp = tempfile.TemporaryFile()
+            shutil.copyfileobj(file, temp)
+            filelist.append((temp, secure_filename(file.filename)))
+        uploadedFiles[key] = filelist
 
 @app.route('/')
 def showSelectFileType():
@@ -43,6 +45,8 @@ def showConfigureFiles():
             return render_template('configurePdbFile.html')
         elif fileType == 'amber':
             return render_template('configureAmberFiles.html')
+        elif fileType == 'charmm':
+            return render_template('configureCharmmFiles.html')
         elif fileType == 'gromacs':
             return render_template('configureGromacsFiles.html')
     except:
@@ -63,6 +67,11 @@ def configureFiles():
         session['amoebaWaterModel'] = request.form.get('amoebaWaterModel', '')
     elif fileType == 'amber':
         if 'prmtopFile' not in request.files or request.files['prmtopFile'].filename == '' or 'inpcrdFile' not in request.files or request.files['inpcrdFile'].filename == '':
+            # They didn't select a file.  Send them back.
+            return showConfigureFiles()
+        saveUploadedFiles()
+    elif fileType == 'charmm':
+        if 'psfFile' not in request.files or request.files['psfFile'].filename == '' or 'crdFile' not in request.files or request.files['crdFile'].filename == '':
             # They didn't select a file.  Send them back.
             return showConfigureFiles()
         saveUploadedFiles()
@@ -99,9 +108,9 @@ def downloadPackage():
     with zipfile.ZipFile(temp, 'w', zipfile.ZIP_DEFLATED) as zip:
         zip.writestr('openmm_simulation/run_openmm_simulation.py', createScript())
         for key in uploadedFiles:
-            file, name = uploadedFiles[key]
-            file.seek(0, 0)
-            zip.writestr('openmm_simulation/%s' % name, file.read())
+            for file, name in uploadedFiles[key]:
+                file.seek(0, 0)
+                zip.writestr('openmm_simulation/%s' % name, file.read())
     temp.seek(0, 0)
     return send_file(temp, 'application/zip', True, 'openmm_simulation.zip', cache_timeout=0)
 
@@ -127,10 +136,10 @@ def startSimulation():
         return ""
     try:
         for key in uploadedFiles:
-            file, name = uploadedFiles[key]
-            file.seek(0, 0)
-            with open(os.path.join(outputDir, name), 'wb') as outputFile:
-                shutil.copyfileobj(file, outputFile)
+            for file, name in uploadedFiles[key]:
+                file.seek(0, 0)
+                with open(os.path.join(outputDir, name), 'wb') as outputFile:
+                    shutil.copyfileobj(file, outputFile)
         with open(os.path.join(outputDir, 'run_openmm_simulation.py'), 'w') as outputFile:
             outputFile.write(createScript())
     except:
@@ -233,9 +242,9 @@ os.chdir(outputDir)""")
     script.append('\n# Input Files\n')
     fileType = session['fileType']
     if fileType == 'pdb':
-        script.append("pdb = PDBFile('%s')" % uploadedFiles['file'][1])
+        script.append("pdb = PDBFile('%s')" % uploadedFiles['file'][0][1])
     elif fileType == 'pdbx':
-        script.append("pdbx = PDBxFile('%s')" % uploadedFiles['file'][1])
+        script.append("pdbx = PDBxFile('%s')" % uploadedFiles['file'][0][1])
     if fileType in ('pdb', 'pdbx'):
         forcefield = session['forcefield']
         water = session['waterModel']
@@ -254,11 +263,16 @@ os.chdir(outputDir)""")
         else:
             script.append("forcefield = ForceField('%s', '%s')" % (forcefield, water))
     elif fileType == 'amber':
-        script.append("prmtop = AmberPrmtopFile('%s')" % uploadedFiles['prmtopFile'][1])
-        script.append("inpcrd = AmberInpcrdFile('%s')" % uploadedFiles['inpcrdFile'][1])
+        script.append("prmtop = AmberPrmtopFile('%s')" % uploadedFiles['prmtopFile'][0][1])
+        script.append("inpcrd = AmberInpcrdFile('%s')" % uploadedFiles['inpcrdFile'][0][1])
+    elif fileType == 'charmm':
+        script.append("psf = CharmmPsfFile('%s')" % uploadedFiles['psfFile'][0][1])
+        script.append("crd = CharmmCrdFile('%s')" % uploadedFiles['crdFile'][0][1])
+        ffFiles = ', '.join(["'%s'" % f[1] for f in uploadedFiles['ffFiles']])
+        script.append("params = CharmmParameterSet(%s)" % ffFiles)
     elif fileType == 'gromacs':
-        script.append("gro = GromacsGroFile('%s')" % uploadedFiles['groFile'][1])
-        script.append("top = GromacsTopFile('%s', includeDir='%s'," % (uploadedFiles['topFile'][1], session['gromacsIncludeDir']))
+        script.append("gro = GromacsGroFile('%s')" % uploadedFiles['groFile'][0][1])
+        script.append("top = GromacsTopFile('%s', includeDir='%s'," % (uploadedFiles['topFile'][0][1], session['gromacsIncludeDir']))
         script.append("    periodicBoxVectors=gro.getPeriodicBoxVectors()')")
 
     # System configuration
@@ -323,6 +337,9 @@ os.chdir(outputDir)""")
     elif fileType == 'amber':
         script.append('topology = prmtop.topology')
         script.append('positions = inpcrd.positions')
+    elif fileType == 'charmm':
+        script.append('topology = psf.topology')
+        script.append('positions = crd.positions')
     elif fileType == 'gromacs':
         script.append('topology = top.topology')
         script.append('positions = gro.positions')
@@ -336,6 +353,9 @@ os.chdir(outputDir)""")
         script.append('    constraints=constraints, rigidWater=rigidWater%s)' % (', ewaldErrorTolerance=ewaldErrorTolerance' if nonbondedMethod == 'PME' else ''))
     elif fileType == 'amber':
         script.append('system = prmtop.createSystem(nonbondedMethod=nonbondedMethod,%s' % (' nonbondedCutoff=nonbondedCutoff,' if nonbondedMethod != 'NoCutoff' else ''))
+        script.append('    constraints=constraints, rigidWater=rigidWater%s)' % (', ewaldErrorTolerance=ewaldErrorTolerance' if nonbondedMethod == 'PME' else ''))
+    elif fileType == 'charmm':
+        script.append('system = psf.createSystem(params, nonbondedMethod=nonbondedMethod,%s' % (' nonbondedCutoff=nonbondedCutoff,' if nonbondedMethod != 'NoCutoff' else ''))
         script.append('    constraints=constraints, rigidWater=rigidWater%s)' % (', ewaldErrorTolerance=ewaldErrorTolerance' if nonbondedMethod == 'PME' else ''))
     elif fileType == 'gromacs':
         script.append('system = top.createSystem(nonbondedMethod=nonbondedMethod,%s' % (' nonbondedCutoff=nonbondedCutoff,' if nonbondedMethod != 'NoCutoff' else ''))

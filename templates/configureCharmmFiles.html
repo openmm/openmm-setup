@@ -1,0 +1,46 @@
+{% extends "layout.html" %}
+
+{% macro fileinput(id, multiple) %}
+    <div class="input-group">
+        <label class="btn btn-default btn-file input-group-addon">
+            Browse... <input type="file" name="{{ id }}" id="{{ id }}" style="display: none" onchange="optionChanged()" {{ multiple }}/>
+        </label>
+        <span id="{{ id }}_label" class="form-control"/>
+    </div>
+{% endmacro %}
+
+{% block title %}Select Input Files{% endblock %}
+{% block body %}
+Select the input files.
+<p/>
+<form method="post" enctype="multipart/form-data" action="{{ url_for('configureFiles') }}" class="form-horizontal">
+    <div class="form-group">
+    <label for="psfFile" class="control-label col-md-2">PSF File</label>
+    <div class="col-md-10">{{ fileinput('psfFile', '') }}</div>
+    </div>
+    <div class="form-group">
+    <label for="crdFile" class="control-label col-md-2">CRD File</label>
+    <div class="col-md-10">{{ fileinput('crdFile', '') }}</div>
+    </div>
+    <div class="form-group">
+    <label for="ffFiles" class="control-label col-md-2">Force Field Files</label>
+    <div class="col-md-10">{{ fileinput('ffFiles', 'multiple') }}</div>
+    </div>
+    <input type="submit" value="Continue" id="continue" class="btn" disabled="true"/>
+</form>
+<script>
+function optionChanged() {
+    // Update UI elements.
+
+    document.getElementById("psfFile_label").textContent = document.getElementById("psfFile").value;
+    document.getElementById("crdFile_label").textContent = document.getElementById("crdFile").value;
+    ffFiles = document.getElementById("ffFiles").files;
+    ffNames = [];
+    for (var i = 0; i < ffFiles.length; i++)
+        ffNames.push(ffFiles[i].name);
+    document.getElementById("ffFiles_label").textContent = ffNames.join(", ");
+    document.getElementById('continue').disabled = !document.getElementById("psfFile").value || !document.getElementById("crdFile").value;
+}
+optionChanged()
+</script>
+{% endblock %}

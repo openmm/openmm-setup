@@ -15,11 +15,11 @@ Select the input files.
 <p/>
 <form method="post" enctype="multipart/form-data" action="{{ url_for('configureFiles') }}" class="form-horizontal">
     <div class="form-group">
-    <label for="topFile" class="control-label col-md-2">TOP File Name</label>
+    <label for="topFile" class="control-label col-md-2">TOP File</label>
     <div class="col-md-10">{{ fileinput('topFile') }}</div>
     </div>
     <div class="form-group">
-    <label for="groFile" class="control-label col-md-2">GRO File Name</label>
+    <label for="groFile" class="control-label col-md-2">GRO File</label>
     <div class="col-md-10">{{ fileinput('groFile') }}</div>
     </div>
     <p>To load Gromacs files, OpenMM needs to know where the Gromacs force field definitions have been installed.

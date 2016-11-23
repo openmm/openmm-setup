@@ -15,11 +15,11 @@ Select the input files.
 <p/>
 <form method="post" enctype="multipart/form-data" action="{{ url_for('configureFiles') }}" class="form-horizontal">
     <div class="form-group">
-    <label for="prmtopFile" class="control-label col-md-2">Prmtop File Name</label>
+    <label for="prmtopFile" class="control-label col-md-2">Prmtop File</label>
     <div class="col-md-10">{{ fileinput('prmtopFile') }}</div>
     </div>
     <div class="form-group">
-    <label for="inpcrdFile" class="control-label col-md-2">Inpcrd File Name</label>
+    <label for="inpcrdFile" class="control-label col-md-2">Inpcrd File</label>
     <div class="col-md-10">{{ fileinput('inpcrdFile') }}</div>
     </div>
     <input type="submit" value="Continue" id="continue" class="btn" disabled="true"/>
