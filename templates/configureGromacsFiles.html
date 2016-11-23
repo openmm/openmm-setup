@@ -1,0 +1,45 @@
+{% extends "layout.html" %}
+
+{% macro fileinput(id) %}
+    <div class="input-group">
+        <label class="btn btn-default btn-file input-group-addon">
+            Browse... <input type="file" name="{{ id }}" id="{{ id }}" style="display: none" onchange="optionChanged()"/>
+        </label>
+        <span id="{{ id }}_label" class="form-control"/>
+    </div>
+{% endmacro %}
+
+{% block title %}Select Input Files{% endblock %}
+{% block body %}
+Select the input files.
+<p/>
+<form method="post" enctype="multipart/form-data" action="{{ url_for('configureFiles') }}" class="form-horizontal">
+    <div class="form-group">
+    <label for="topFile" class="control-label col-md-2">TOP File Name</label>
+    <div class="col-md-10">{{ fileinput('topFile') }}</div>
+    </div>
+    <div class="form-group">
+    <label for="groFile" class="control-label col-md-2">GRO File Name</label>
+    <div class="col-md-10">{{ fileinput('groFile') }}</div>
+    </div>
+    <p>To load Gromacs files, OpenMM needs to know where the Gromacs force field definitions have been installed.
+    Enter the directory location here.</p>
+    <div class="form-group">
+    <label for="gromacsIncludeDir" class="control-label col-md-2">Force Field Directory</label>
+    <div class="col-md-10">
+    <input type="text" name="gromacsIncludeDir" class="form-control" value="/usr/local/gromacs/share/gromacs/top">
+    </div>
+    </div>
+    <input type="submit" value="Continue" id="continue" class="btn" disabled="true"/>
+</form>
+<script>
+function optionChanged() {
+    // Update UI elements.
+
+    document.getElementById("topFile_label").textContent = document.getElementById("topFile").value
+    document.getElementById("groFile_label").textContent = document.getElementById("groFile").value
+    document.getElementById('continue').disabled = !document.getElementById("topFile").value || !document.getElementById("groFile").value;
+}
+optionChanged()
+</script>
+{% endblock %}

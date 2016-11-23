@@ -43,6 +43,8 @@ def showConfigureFiles():
             return render_template('configurePdbFile.html')
         elif fileType == 'amber':
             return render_template('configureAmberFiles.html')
+        elif fileType == 'gromacs':
+            return render_template('configureGromacsFiles.html')
     except:
         app.logger.error('Error displaying configure files page', exc_info=True)
     # The file type is invalid, so send them back to the select file type page.
@@ -64,6 +66,12 @@ def configureFiles():
             # They didn't select a file.  Send them back.
             return showConfigureFiles()
         saveUploadedFiles()
+    elif fileType == 'gromacs':
+        if 'topFile' not in request.files or request.files['topFile'].filename == '' or 'groFile' not in request.files or request.files['groFile'].filename == '':
+            # They didn't select a file.  Send them back.
+            return showConfigureFiles()
+        saveUploadedFiles()
+        session['gromacsIncludeDir'] = request.form.get('gromacsIncludeDir', '')
     configureDefaultOptions()
     return showSimulationOptions()
 
@@ -248,6 +256,10 @@ os.chdir(outputDir)""")
     elif fileType == 'amber':
         script.append("prmtop = AmberPrmtopFile('%s')" % uploadedFiles['prmtopFile'][1])
         script.append("inpcrd = AmberInpcrdFile('%s')" % uploadedFiles['inpcrdFile'][1])
+    elif fileType == 'gromacs':
+        script.append("gro = GromacsGroFile('%s')" % uploadedFiles['groFile'][1])
+        script.append("top = GromacsTopFile('%s', includeDir='%s'," % (uploadedFiles['topFile'][1], session['gromacsIncludeDir']))
+        script.append("    periodicBoxVectors=gro.getPeriodicBoxVectors()')")
 
     # System configuration
 
@@ -311,6 +323,9 @@ os.chdir(outputDir)""")
     elif fileType == 'amber':
         script.append('topology = prmtop.topology')
         script.append('positions = inpcrd.positions')
+    elif fileType == 'gromacs':
+        script.append('topology = top.topology')
+        script.append('positions = gro.positions')
     if fileType in ('pdb', 'pdbx') and (forcefield == 'charmm_polar_2013.xml' or water in ('tip4pew.xml', 'tip4pfb.xml', 'tip5p.xml')):
         script.append('modeller = Modeller(topology, positions)')
         script.append('modeller.addExtraParticles(forcefield)')
@@ -322,6 +337,9 @@ os.chdir(outputDir)""")
     elif fileType == 'amber':
         script.append('system = prmtop.createSystem(nonbondedMethod=nonbondedMethod,%s' % (' nonbondedCutoff=nonbondedCutoff,' if nonbondedMethod != 'NoCutoff' else ''))
         script.append('    constraints=constraints, rigidWater=rigidWater%s)' % (', ewaldErrorTolerance=ewaldErrorTolerance' if nonbondedMethod == 'PME' else ''))
+    elif fileType == 'gromacs':
+        script.append('system = top.createSystem(nonbondedMethod=nonbondedMethod,%s' % (' nonbondedCutoff=nonbondedCutoff,' if nonbondedMethod != 'NoCutoff' else ''))
+        script.append('    constraints=constraints, rigidWater=rigidWater%s)' % (', ewaldErrorTolerance=ewaldErrorTolerance' if nonbondedMethod == 'PME' else ''))
     if ensemble == 'npt':
         script.append('system.addForce(MonteCarloBarostat(pressure, temperature, barostatInterval))')
     if ensemble == 'nve':
@@ -332,6 +350,9 @@ os.chdir(outputDir)""")
         script.append('integrator.setConstraintTolerance(constraintTolerance)')
     script.append('simulation = Simulation(topology, system, integrator, platform%s)' % (', platformProperties' if session['platform'] in ('CUDA', 'OpenCL') else ''))
     script.append('simulation.context.setPositions(positions)')
+    if fileType == 'amber':
+        script.append('if inpcrd.boxVectors is not None:')
+        script.append('    simulation.context.setPeriodicBoxVectors(*inpcrd.boxVectors')
     
     # Minimize and equilibrate
     
