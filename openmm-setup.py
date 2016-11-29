@@ -1,4 +1,5 @@
 import simtk.openmm as mm
+import simtk.unit as unit
 from simtk.openmm.app import PDBFile, PDBxFile
 from pdbfixer.pdbfixer import PDBFixer, proteinResidues, dnaResidues, rnaResidues, _guessFileFormat
 from flask import Flask, request, session, g, render_template, make_response, send_file
@@ -191,10 +192,43 @@ def addHeavyAtoms():
     return showAddHydrogens()
 
 def showAddHydrogens():
-    return addHydrogens()
+    unitCell = fixer.topology.getUnitCellDimensions().value_in_unit(unit.nanometer)
+    boundingBox = tuple((max((pos[i] for pos in fixer.positions))-min((pos[i] for pos in fixer.positions))).value_in_unit(unit.nanometer) for i in range(3))
+    return render_template('addHydrogens.html', unitCell=unitCell, boundingBox=boundingBox)
 
 @app.route('/addHydrogens', methods=['POST'])
 def addHydrogens():
+    heterogens = request.form.get('heterogens', '')
+    if heterogens == 'none':
+        fixer.removeHeterogens(False)
+    elif heterogens == 'water':
+        fixer.removeHeterogens(True)
+    if 'addhydrogens' in request.form:
+        pH = float(request.form.get('ph', '7'))
+        fixer.addMissingHydrogens(pH)
+    if 'addwater' in request.form:
+        padding, boxSize, boxVectors = None, None, None
+        if request.form['boxType'] == 'geometry':
+            geompadding = float(request.form['geomPadding']) * unit.nanometer
+            geometry = request.form['geometryDropdown']
+            maxSize = max(max((pos[i] for pos in fixer.positions))-min((pos[i] for pos in fixer.positions)) for i in range(3)).value_in_unit(nanometer)
+            if geometry == 'cube':
+                padding = geompadding
+            elif geometry == 'truncatedOctahedron':
+                vectors = Vec3(1,0,0), Vec3(1/3,2*sqrt(2)/3,0), Vec3(-1/3,1/3,sqrt(6)/3)
+                boxVectors = [(maxSize+geompadding)*v for v in vectors]
+            elif geometry == 'rhombicDodecahedron':
+                vectors = Vec3(1,0,0), Vec3(0,1,0), Vec3(0.5,0.5,sqrt(2)/2)
+                boxVectors = [(maxSize+geompadding)*v for v in vectors]
+        else:
+            boxSize = (float(request.form['boxx']), float(request.form['boxy']), float(request.form['boxz']))*unit.nanometer
+        ionicStrength = float(request.form['ionicstrength'])*unit.molar
+        positiveIon = request.form['positiveion']+'+'
+        negativeIon = request.form['negativeion']+'-'
+        fixer.addSolvent(boxSize, padding, boxVectors, positiveIon, negativeIon, ionicStrength)
+    
+    # Save the new PDB file.
+    
     uploadedFiles['originalFile'] = uploadedFiles['file']
     temp = tempfile.TemporaryFile(mode='w+')
     if session['fileType'] == 'pdb':
