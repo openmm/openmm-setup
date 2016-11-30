@@ -12,6 +12,12 @@ import sys
 import tempfile
 import zipfile
 
+if sys.version_info >= (3,0):
+    from io import StringIO
+else:
+    from cStringIO import StringIO
+
+
 app = Flask(__name__)
 app.config.from_object(__name__)
 app.config.update({'SECRET_KEY':'development key'})
@@ -230,11 +236,13 @@ def addHydrogens():
     # Save the new PDB file.
     
     uploadedFiles['originalFile'] = uploadedFiles['file']
-    temp = tempfile.TemporaryFile(mode='w+')
+    pdb = StringIO()
     if session['fileType'] == 'pdb':
-        PDBFile.writeFile(fixer.topology, fixer.positions, temp, True)
+        PDBFile.writeFile(fixer.topology, fixer.positions, pdb, True)
     else:
-        PDBxFile.writeFile(fixer.topology, fixer.positions, temp, True)
+        PDBxFile.writeFile(fixer.topology, fixer.positions, pdb, True)
+    temp = tempfile.TemporaryFile()
+    temp.write(pdb.getvalue().encode('utf-8'))
     name = uploadedFiles['file'][0][1]
     dotIndex = name.rfind('.')
     if dotIndex == -1:
