@@ -4,6 +4,8 @@
 This PDB file contains {{ chains|length }} chains.  Select which ones to include.
 <p/>
 <form method="post" action="{{ url_for('selectChains') }}">
+    <div class="row">
+    <div class="col-md-6">
     <table class="table" id="table">
         <tr><th>Chain</th><th># Residues</th><th>Content</th><th>Include?</th></tr>
         {% for chain in chains %}
@@ -19,9 +21,15 @@ This PDB file contains {{ chains|length }} chains.  Select which ones to include
         <button type="button" id="start" class="btn btn-default" onclick="setCheckboxes(true)">Select All</button>
         <button type="button" id="start" class="btn btn-default" onclick="setCheckboxes(false)">Select None</button>
     </div>
+    </div>
+    <div class="col-md-6" id="viewport" style="width:500px; height:500px">
+    </div>
+    </div>
     <input type="submit" value="Continue" id="continue" class="btn"/>
 </form>
 
+<script src="{{ url_for('static', filename='ngl.js') }}"></script>
+    
 <script>
 function optionChanged() {
     // Update UI elements.
@@ -31,6 +39,14 @@ function optionChanged() {
     for (var i = 0; i < checkboxes.length; i++)
         any |= checkboxes[i].checked
     document.getElementById('continue').disabled = !any;
+    if (window['molStructure'] != undefined) {
+        molStructure.clearRepresentations();
+        {% for chain in chains %}
+        if (checkboxes[{{ loop.index0 }}].checked)
+            molStructure.addRepresentation("{{ "cartoon" if chain[2] == 'DNA' or chain[2] == 'Protein' else "ball+stick" }}",
+                                           {sele:":"+String.fromCharCode({{ loop.index0+65 }})});
+        {% endfor %}
+    }
 }
 function setCheckboxes(selected) {
     checkboxes = document.getElementById("table").getElementsByTagName("input")
@@ -38,5 +54,13 @@ function setCheckboxes(selected) {
         checkboxes[i].checked = selected
     optionChanged()
 }
+document.addEventListener( "DOMContentLoaded", function(){
+    stage = new NGL.Stage("viewport");
+    stage.loadFile("{{ url_for('getCurrentStructure') }}", {ext:"pdb"}).then(function(o) {
+        molStructure = o;
+        optionChanged();
+        o.centerView();
+    });
+} );
 </script>
 {% endblock %}

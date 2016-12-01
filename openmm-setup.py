@@ -103,6 +103,12 @@ def configureFiles():
     configureDefaultOptions()
     return showSimulationOptions()
 
+@app.route('/getCurrentStructure')
+def getCurrentStructure():
+    pdb = StringIO()
+    PDBFile.writeFile(fixer.topology, fixer.positions, pdb)
+    return pdb.getvalue()
+
 def showSelectChains():
     chains = []
     for chain in fixer.topology.chains():
