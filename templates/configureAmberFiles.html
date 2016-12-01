@@ -28,8 +28,10 @@ Select the input files.
 function optionChanged() {
     // Update UI elements.
 
-    document.getElementById("prmtopFile_label").textContent = document.getElementById("prmtopFile").value
-    document.getElementById("inpcrdFile_label").textContent = document.getElementById("inpcrdFile").value
+    prmtopFiles = document.getElementById("prmtopFile").files;
+    inpcrdFiles = document.getElementById("inpcrdFile").files;
+    document.getElementById("prmtopFile_label").textContent = (prmtopFiles.length == 0 ? "" : prmtopFiles[0].name);
+    document.getElementById("inpcrdFile_label").textContent = (inpcrdFiles.length == 0 ? "" : inpcrdFiles[0].name);
     document.getElementById('continue').disabled = !document.getElementById("prmtopFile").value || !document.getElementById("inpcrdFile").value;
 }
 optionChanged()

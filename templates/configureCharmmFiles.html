@@ -32,9 +32,11 @@ Select the input files.
 function optionChanged() {
     // Update UI elements.
 
-    document.getElementById("psfFile_label").textContent = document.getElementById("psfFile").value;
-    document.getElementById("crdFile_label").textContent = document.getElementById("crdFile").value;
+    psfFiles = document.getElementById("psfFile").files;
+    crdFiles = document.getElementById("crdFile").files;
     ffFiles = document.getElementById("ffFiles").files;
+    document.getElementById("psfFile_label").textContent = (psfFiles.length == 0 ? "" : psfFiles[0].name);
+    document.getElementById("crdFile_label").textContent = (crdFiles.length == 0 ? "" : crdFiles[0].name);
     ffNames = [];
     for (var i = 0; i < ffFiles.length; i++)
         ffNames.push(ffFiles[i].name);

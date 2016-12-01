@@ -15,6 +15,9 @@
                     This application requires Javascript to operate.  Please enable Javascript in your browser, then reload this page.
                 </div>
             </noscript>
+            <div>
+            <img src="{{ url_for('static', filename='icon.svg') }}"/>
+            </div>
             {% block body %}{% endblock %}
         </div>
     </body>

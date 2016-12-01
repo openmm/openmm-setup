@@ -36,8 +36,10 @@ Select the input files.
 function optionChanged() {
     // Update UI elements.
 
-    document.getElementById("topFile_label").textContent = document.getElementById("topFile").value
-    document.getElementById("groFile_label").textContent = document.getElementById("groFile").value
+    topFiles = document.getElementById("topFile").files;
+    groFiles = document.getElementById("groFile").files;
+    document.getElementById("topFile_label").textContent = (topFiles.length == 0 ? "" : topFiles[0].name);
+    document.getElementById("groFile_label").textContent = (groFiles.length == 0 ? "" : groFiles[0].name);
     document.getElementById('continue').disabled = !document.getElementById("topFile").value || !document.getElementById("groFile").value;
 }
 optionChanged()

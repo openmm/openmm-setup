@@ -21,11 +21,12 @@ This PDB file contains {{ chains|length }} chains.  Select which ones to include
         <button type="button" id="start" class="btn btn-default" onclick="setCheckboxes(true)">Select All</button>
         <button type="button" id="start" class="btn btn-default" onclick="setCheckboxes(false)">Select None</button>
     </div>
+    <p/>
+    <input type="submit" value="Continue" id="continue" class="btn"/>
     </div>
     <div class="col-md-6" id="viewport" style="width:500px; height:500px">
     </div>
     </div>
-    <input type="submit" value="Continue" id="continue" class="btn"/>
 </form>
 
 <script src="{{ url_for('static', filename='ngl.js') }}"></script>

@@ -62,7 +62,8 @@ function optionChanged() {
     forcefield = document.getElementById("forcefield").value;
     document.getElementById("waterModelRow").hidden = (forcefield == 'amoeba2013.xml' || forcefield == 'charmm_polar_2013.xml');
     document.getElementById("amoebaWaterModelRow").hidden = (forcefield != 'amoeba2013.xml');
-    document.getElementById("file_label").textContent = document.getElementById("file").value
+    files = document.getElementById("file").files;
+    document.getElementById("file_label").textContent = (files.length == 0 ? "" : files[0].name);
     document.getElementById('continue').disabled = !document.getElementById("file").value;
 }
 optionChanged()

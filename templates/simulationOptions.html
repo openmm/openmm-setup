@@ -1,8 +1,8 @@
 {% extends "layout.html" %}
 {% block title %}Simulation Options{% endblock %}
 
-{% macro choice(id, options) %}
-    <select name="{{ id }}" id="{{ id }}" class="form-control" onchange="optionChanged()">
+{% macro choice(id, title, options) %}
+    <select name="{{ id }}" id="{{ id }}" title="{{ title }}" class="form-control" onchange="optionChanged()">
         {% for option in options %}
             <option value="{{ option[0] }}" title="{{ option[2] }}" {{ 'selected' if session[id] == option[0] else '' }}>{{ option[1] }}</option>
         {% endfor %}
@@ -33,11 +33,11 @@
             <div class="form-group">
             <label for="nonbondedMethod">Nonbonded Method</label>
             {% if session['forcefield'].startswith('amoeba') %}
-                {{ choice('nonbondedMethod', [
+                {{ choice('nonbondedMethod', 'Select how to compute long range nonbonded interactions.', [
                     ('NoCutoff', 'No cutoff', 'The system is not periodic, and no cutoff is applied to nonbonded interactions.'),
                     ('PME', 'PME', 'Periodic boundary conditions are used.  Long range interactions are computed with Particle Mesh Ewald.')]) }}
             {% else %}
-                {{ choice('nonbondedMethod', [
+                {{ choice('nonbondedMethod', 'Select how to compute long range nonbonded interactions.', [
                     ('NoCutoff', 'No cutoff', 'The system is not periodic, and no cutoff is applied to nonbonded interactions.'),
                     ('CutoffNonPeriodic', 'Cutoff, non-periodic', 'The system is not periodic.  Long range interactions are cut off with the reaction field method.'),
                     ('CutoffPeriodic', 'Cutoff, periodic', 'Periodic boundary conditions are used.  Long range interactions are cut off with the reaction field method.'),
@@ -54,7 +54,7 @@
             </div>
             <div class="form-group">
             <label for="constraints">Constraints</label>
-            {{ choice('constraints', [
+            {{ choice('constraints', 'Select which bonds to replace with rigid constraints.', [
                 ('none', 'None', 'No degrees of freedom are constrained.'),
                 ('water', 'Water only', 'Water molecules are kept rigid, but no other degrees of freedom are constrained.'),
                 ('hbonds', 'Bonds involving hydrogen', 'The lengths of bonds involving a hydrogen atom are kept fixed.  Water molecules are kept rigid.'),
@@ -75,7 +75,7 @@
             </div>
             <div class="form-group">
             <label for="ensemble">Statistical Ensemble</label>
-            {{ choice('ensemble', [
+            {{ choice('ensemble', 'Select the statistical ensemble to simulate.  This describes how the system interacts with the surrounding environment.', [
                 ('npt', 'Constant pressure, temperature', 'The simulation includes a thermostat and barostat to sample a constant pressure, constant temperature (NPT) ensemble.'),
                 ('nvt', 'Constant volume, temperature', 'The simulation includes a thermostat so it samples a constant volume, constant temperature (NVT) ensemble.'),
                 ('nve', 'Constant volume, energy', 'The box volume and total energy are both held constant so the simulation samples a NVE ensemble.')]) }}
@@ -111,7 +111,7 @@
             </div>
             <div class="form-group">
             <label for="platform">Platform</label>
-            {{ choice('platform', [
+            {{ choice('platform', 'Select the platform to use.  This must match the hardware you plan to run the simulation on.', [
                 ('Reference', 'Reference', 'The Reference platform is useful for testing, but not recommended for production simulations.'),
                 ('CPU', 'CPU', 'Run the simulation on a conventional CPU'),
                 ('CUDA', 'CUDA', 'Run the simulation on an NVIDIA GPU'),
@@ -119,7 +119,7 @@
             </div>
             <div class="form-group" id="precisionRow">
             <label for="precision">Precision</label>
-            {{ choice('precision', [
+            {{ choice('precision', 'Select the level of numerical precision to use.', [
                 ('single', 'Single', 'Most calculations are done in single precision.  This is the fastest option.'),
                 ('mixed', 'Mixed', 'Use a mix of single and double precision to give reasonably high performance, but better energy conservation than single precision.  This is recommended for NVE simulations.'),
                 ('double', 'Double', 'All calculations are done in double precision.  This can be very slow.')]) }}

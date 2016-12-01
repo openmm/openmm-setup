@@ -1,7 +1,7 @@
 {% extends "layout.html" %}
 {% block title %}Select Input File Type{% endblock %}
 {% block body %}
-<h1>Welcome to OpenMM!</h1>
+<h2>Welcome to OpenMM!</h2>
 What kind of file or files do you have describing the system to simulate?
 <p/>
 <form method="get" action="{{ url_for('selectFiles') }}">
@@ -10,7 +10,7 @@ What kind of file or files do you have describing the system to simulate?
     <label class="control-label"><input type="radio" name="type" value="amber"/> Amber</label>
     <p style="margin-left:50px">Amber prmtop and inpcrd files</p>
     <label class="control-label"><input type="radio" name="type" value="charmm"/> CHARMM</label>
-    <p style="margin-left:50px">A CHARMM psf file, along with the force field definition in CHARMM format</p>
+    <p style="margin-left:50px">CHARMM psf and crd files, along with the force field definition in CHARMM format</p>
     <label class="control-label"><input type="radio" name="type" value="gromacs"/> Gromacs</label>
     <p style="margin-left:50px">Gromacs gro and top files</p>
     <input type="submit" value="Continue" class="btn"/>
