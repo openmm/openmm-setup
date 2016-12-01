@@ -50,7 +50,7 @@ def selectFiles():
 def showConfigureFiles():
     try:
         fileType = session['fileType']
-        if fileType in ('pdb', 'pdbx'):
+        if fileType == 'pdb':
             return render_template('configurePdbFile.html')
         elif fileType == 'amber':
             return render_template('configureAmberFiles.html')
@@ -66,7 +66,7 @@ def showConfigureFiles():
 @app.route('/configureFiles', methods=['POST'])
 def configureFiles():
     fileType = session['fileType']
-    if fileType in ('pdb', 'pdbx'):
+    if fileType == 'pdb':
         if 'file' not in request.files or request.files['file'].filename == '':
             # They didn't select a file.  Send them back.
             return showConfigureFiles()
@@ -77,12 +77,13 @@ def configureFiles():
         session['cleanup'] = request.form.get('cleanup', '')
         if session['cleanup'] == 'yes':
             global fixer
-            file = uploadedFiles['file'][0][0]
+            file, name = uploadedFiles['file'][0]
             file.seek(0, 0)
-            if fileType == 'pdb':
+            session['pdbType'] = _guessFileFormat(file, name)
+            if session['pdbType'] == 'pdb':
                 fixer = PDBFixer(pdbfile=file)
             else:
-                fixer = PDBFixer(pdbxfile=file)
+                fixer = PDBFixer(pdbxfile=StringIO(file.read().decode()))
             return showSelectChains()
     elif fileType == 'amber':
         if 'prmtopFile' not in request.files or request.files['prmtopFile'].filename == '' or 'inpcrdFile' not in request.files or request.files['inpcrdFile'].filename == '':
@@ -243,7 +244,7 @@ def addHydrogens():
     
     uploadedFiles['originalFile'] = uploadedFiles['file']
     pdb = StringIO()
-    if session['fileType'] == 'pdb':
+    if session['pdbType'] == 'pdb':
         PDBFile.writeFile(fixer.topology, fixer.positions, pdb, True)
     else:
         PDBxFile.writeFile(fixer.topology, fixer.positions, pdb, True)
@@ -388,7 +389,7 @@ def configureDefaultOptions():
     session['dataFilename'] = 'log.txt'
     session['dataInterval'] = '1000'
     session['dataFields'] = ['step', 'speed' ,'progress', 'potentialEnergy', 'temperature']
-    isAmoeba = session['fileType'] in ('pdb', 'pdbx') and 'amoeba' in session['forcefield']
+    isAmoeba = session['fileType'] == 'pdb' and 'amoeba' in session['forcefield']
     if isAmoeba:
         session['constraints'] = 'none'
     else:
@@ -426,10 +427,11 @@ os.chdir(outputDir)""")
     script.append('\n# Input Files\n')
     fileType = session['fileType']
     if fileType == 'pdb':
-        script.append("pdb = PDBFile('%s')" % uploadedFiles['file'][0][1])
-    elif fileType == 'pdbx':
-        script.append("pdbx = PDBxFile('%s')" % uploadedFiles['file'][0][1])
-    if fileType in ('pdb', 'pdbx'):
+        pdbType = session['pdbType']
+        if pdbType == 'pdb':
+            script.append("pdb = PDBFile('%s')" % uploadedFiles['file'][0][1])
+        else:
+            script.append("pdbx = PDBxFile('%s')" % uploadedFiles['file'][0][1])
         forcefield = session['forcefield']
         water = session['waterModel']
         if forcefield == 'amoeba2013.xml':
@@ -512,10 +514,10 @@ os.chdir(outputDir)""")
     
     script.append('\n# Prepare the Simulation\n')
     script.append("print('Building system...')")
-    if fileType == 'pdb':
+    if fileType == 'pdb' and pdbType == 'pdb':
         script.append('topology = pdb.topology')
         script.append('positions = pdb.positions')
-    elif fileType == 'pdbx':
+    elif fileType == 'pdb' and pdbType == 'pdbx':
         script.append('topology = pdbx.topology')
         script.append('positions = pdbx.positions')
     elif fileType == 'amber':
@@ -527,12 +529,12 @@ os.chdir(outputDir)""")
     elif fileType == 'gromacs':
         script.append('topology = top.topology')
         script.append('positions = gro.positions')
-    if fileType in ('pdb', 'pdbx') and (forcefield == 'charmm_polar_2013.xml' or water in ('tip4pew.xml', 'tip4pfb.xml', 'tip5p.xml')):
+    if fileType == 'pdb' and (forcefield == 'charmm_polar_2013.xml' or water in ('tip4pew.xml', 'tip4pfb.xml', 'tip5p.xml')):
         script.append('modeller = Modeller(topology, positions)')
         script.append('modeller.addExtraParticles(forcefield)')
         script.append('topology = modeller.topology')
         script.append('positions = modeller.positions')
-    if fileType in ('pdb', 'pdbx'):
+    if fileType  == 'pdb':
         script.append('system = forcefield.createSystem(topology, nonbondedMethod=nonbondedMethod,%s' % (' nonbondedCutoff=nonbondedCutoff,' if nonbondedMethod != 'NoCutoff' else ''))
         script.append('    constraints=constraints, rigidWater=rigidWater%s)' % (', ewaldErrorTolerance=ewaldErrorTolerance' if nonbondedMethod == 'PME' else ''))
     elif fileType == 'amber':

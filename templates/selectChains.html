@@ -43,7 +43,7 @@ function optionChanged() {
         molStructure.clearRepresentations();
         {% for chain in chains %}
         if (checkboxes[{{ loop.index0 }}].checked)
-            molStructure.addRepresentation("{{ "cartoon" if chain[2] == 'DNA' or chain[2] == 'Protein' else "ball+stick" }}",
+            molStructure.addRepresentation("{{ "cartoon" if chain[2] in ('DNA', 'Protein') else "ball+stick" }}",
                                            {sele:":"+String.fromCharCode({{ loop.index0+65 }})});
         {% endfor %}
     }
