@@ -484,10 +484,9 @@ os.chdir(outputDir)""")
 
     script.append('\n# Integration Options\n')
     script.append('dt = %s*picoseconds' % session['dt'])
+    script.append('temperature = %s*kelvin' % session['temperature'])
+    script.append('friction = %s/picosecond' % session['friction'])
     ensemble = session['ensemble']
-    if ensemble in ('nvt', 'npt'):
-        script.append('temperature = %s*kelvin' % session['temperature'])
-        script.append('friction = %s/picosecond' % session['friction'])
     if ensemble == 'npt':
         script.append('pressure = %s*atmospheres' % session['pressure'])
         script.append('barostatInterval = %s' % session['barostatInterval'])
@@ -548,10 +547,7 @@ os.chdir(outputDir)""")
         script.append('    constraints=constraints, rigidWater=rigidWater%s)' % (', ewaldErrorTolerance=ewaldErrorTolerance' if nonbondedMethod == 'PME' else ''))
     if ensemble == 'npt':
         script.append('system.addForce(MonteCarloBarostat(pressure, temperature, barostatInterval))')
-    if ensemble == 'nve':
-        script.append('integrator = VerletIntegrator(dt)')
-    else:
-        script.append('integrator = LangevinIntegrator(temperature, friction, dt)')
+    script.append('integrator = LangevinIntegrator(temperature, friction, dt)')
     if constraints != 'none':
         script.append('integrator.setConstraintTolerance(constraintTolerance)')
     script.append('simulation = Simulation(topology, system, integrator, platform%s)' % (', platformProperties' if session['platform'] in ('CUDA', 'OpenCL') else ''))

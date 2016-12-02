@@ -77,8 +77,7 @@
             <label for="ensemble">Statistical Ensemble</label>
             {{ choice('ensemble', 'Select the statistical ensemble to simulate.  This describes how the system interacts with the surrounding environment.', [
                 ('npt', 'Constant pressure, temperature', 'The simulation includes a thermostat and barostat to sample a constant pressure, constant temperature (NPT) ensemble.'),
-                ('nvt', 'Constant volume, temperature', 'The simulation includes a thermostat so it samples a constant volume, constant temperature (NVT) ensemble.'),
-                ('nve', 'Constant volume, energy', 'The box volume and total energy are both held constant so the simulation samples a NVE ensemble.')]) }}
+                ('nvt', 'Constant volume, temperature', 'The simulation includes a thermostat so it samples a constant volume, constant temperature (NVT) ensemble.')]) }}
             </div>
             <div class="form-group" id="temperatureRow">
             <label for="temperature">Temperature (K)</label>
@@ -121,7 +120,7 @@
             <label for="precision">Precision</label>
             {{ choice('precision', 'Select the level of numerical precision to use.', [
                 ('single', 'Single', 'Most calculations are done in single precision.  This is the fastest option.'),
-                ('mixed', 'Mixed', 'Use a mix of single and double precision to give reasonably high performance, but better energy conservation than single precision.  This is recommended for NVE simulations.'),
+                ('mixed', 'Mixed', 'Use a mix of single and double precision to give reasonably high performance, but better energy conservation than single precision.  This is recommended for constant energy simulations.'),
                 ('double', 'Double', 'All calculations are done in double precision.  This can be very slow.')]) }}
             </div>
             </div>
@@ -224,8 +223,6 @@ function optionChanged() {
     constraints = document.getElementById("constraints").value;
     document.getElementById("constraintTolRow").hidden = (constraints == 'none');
     ensemble = document.getElementById("ensemble").value;
-    document.getElementById("temperatureRow").hidden = (ensemble == 'nve');
-    document.getElementById("frictionRow").hidden = (ensemble == 'nve');
     document.getElementById("pressureRow").hidden = (ensemble != 'npt');
     document.getElementById("barostatIntervalRow").hidden = (ensemble != 'npt');
     platform = document.getElementById("platform").value;
