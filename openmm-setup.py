@@ -2,7 +2,7 @@ import simtk.openmm as mm
 import simtk.unit as unit
 from simtk.openmm.app import PDBFile, PDBxFile
 from pdbfixer.pdbfixer import PDBFixer, proteinResidues, dnaResidues, rnaResidues, _guessFileFormat
-from flask import Flask, request, session, g, render_template, make_response, send_file
+from flask import Flask, request, session, g, render_template, make_response, send_file, url_for
 from werkzeug.utils import secure_filename
 from multiprocessing import Process, Pipe
 import datetime
@@ -10,6 +10,7 @@ import os
 import shutil
 import sys
 import tempfile
+import webbrowser
 import zipfile
 
 if sys.version_info >= (3,0):
@@ -37,6 +38,17 @@ def saveUploadedFiles():
             shutil.copyfileobj(file, temp)
             filelist.append((temp, secure_filename(file.filename)))
         uploadedFiles[key] = filelist
+
+@app.route('/headerControls')
+def headerControls():
+    if 'startOver' in request.args:
+        return showSelectFileType()
+    if 'quit' in request.args:
+        func = request.environ.get('werkzeug.server.shutdown')
+        if func is None:
+            raise RuntimeError('Not running with the Werkzeug Server')
+        func()
+        return "OpenMM Setup has stopped running.  You can close this window."
 
 @app.route('/')
 def showSelectFileType():
@@ -579,3 +591,9 @@ os.chdir(outputDir)""")
     script.append('simulation.step(steps)')
 
     return "\n".join(script)
+
+
+if __name__ == '__main__':
+    url = 'http://127.0.0.1:5000'
+    webbrowser.open(url)
+    app.run(debug=False)

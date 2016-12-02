@@ -15,9 +15,17 @@
                     This application requires Javascript to operate.  Please enable Javascript in your browser, then reload this page.
                 </div>
             </noscript>
+            <form method="get" action="{{ url_for('headerControls') }}">
             <div>
             <img src="{{ url_for('static', filename='Icon.svg') }}"/>
+            <span style="float:right; margin-top:30px">
+            {% block startover %}
+            <input type="submit" class="btn" name="startOver" value="Start Over"/>
+            {% endblock %}
+            <input type="submit" class="btn" name="quit" value="Quit"/>
+            </span>
             </div>
+            </form>
             {% block body %}{% endblock %}
         </div>
     </body>
