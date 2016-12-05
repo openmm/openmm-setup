@@ -3,7 +3,7 @@
 {% block body %}
 The following residues are missing heavy atoms, which will be added.
 <p/>
-<form method="post" action="{{ url_for('addHeavyAtoms') }}">
+<form method="post" id="form" action="{{ url_for('addHeavyAtoms') }}">
     <table class="table" id="table">
         <tr><th>Chain</th><th>Residue</th><th>Missing Atoms</th></tr>
         {% for residue in residues %}
@@ -14,6 +14,6 @@ The following residues are missing heavy atoms, which will be added.
             </tr>
         {% endfor %}
     </table>
-    <input type="submit" value="Continue" id="continue" class="btn"/>
+    <input type="button" value="Continue" class="btn" onclick="submitWithSpinner('form')"/>
 </form>
 {% endblock %}
