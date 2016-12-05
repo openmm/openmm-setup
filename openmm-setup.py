@@ -228,15 +228,15 @@ def addHydrogens():
         fixer.removeHeterogens(False)
     elif heterogens == 'water':
         fixer.removeHeterogens(True)
-    if 'addhydrogens' in request.form:
+    if 'addHydrogens' in request.form:
         pH = float(request.form.get('ph', '7'))
         fixer.addMissingHydrogens(pH)
-    if 'addwater' in request.form:
+    if 'addWater' in request.form:
         padding, boxSize, boxVectors = None, None, None
         if request.form['boxType'] == 'geometry':
             geompadding = float(request.form['geomPadding']) * unit.nanometer
             geometry = request.form['geometryDropdown']
-            maxSize = max(max((pos[i] for pos in fixer.positions))-min((pos[i] for pos in fixer.positions)) for i in range(3)).value_in_unit(nanometer)
+            maxSize = max(max((pos[i] for pos in fixer.positions))-min((pos[i] for pos in fixer.positions)) for i in range(3)).value_in_unit(unit.nanometer)
             if geometry == 'cube':
                 padding = geompadding
             elif geometry == 'truncatedOctahedron':
