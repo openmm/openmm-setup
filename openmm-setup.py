@@ -5,6 +5,7 @@ from pdbfixer.pdbfixer import PDBFixer, proteinResidues, dnaResidues, rnaResidue
 from flask import Flask, request, session, g, render_template, make_response, send_file, url_for
 from werkzeug.utils import secure_filename
 from multiprocessing import Process, Pipe
+from math import sqrt
 import datetime
 import os
 import shutil
@@ -236,14 +237,14 @@ def addHydrogens():
         if request.form['boxType'] == 'geometry':
             geompadding = float(request.form['geomPadding']) * unit.nanometer
             geometry = request.form['geometryDropdown']
-            maxSize = max(max((pos[i] for pos in fixer.positions))-min((pos[i] for pos in fixer.positions)) for i in range(3)).value_in_unit(unit.nanometer)
+            maxSize = max(max((pos[i] for pos in fixer.positions))-min((pos[i] for pos in fixer.positions)) for i in range(3))
             if geometry == 'cube':
                 padding = geompadding
             elif geometry == 'truncatedOctahedron':
-                vectors = Vec3(1,0,0), Vec3(1/3,2*sqrt(2)/3,0), Vec3(-1/3,1/3,sqrt(6)/3)
+                vectors = mm.Vec3(1,0,0), mm.Vec3(1/3,2*sqrt(2)/3,0), mm.Vec3(-1/3,1/3,sqrt(6)/3)
                 boxVectors = [(maxSize+geompadding)*v for v in vectors]
             elif geometry == 'rhombicDodecahedron':
-                vectors = Vec3(1,0,0), Vec3(0,1,0), Vec3(0.5,0.5,sqrt(2)/2)
+                vectors = mm.Vec3(1,0,0), mm.Vec3(0,1,0), mm.Vec3(0.5,0.5,sqrt(2)/2)
                 boxVectors = [(maxSize+geompadding)*v for v in vectors]
         else:
             boxSize = (float(request.form['boxx']), float(request.form['boxy']), float(request.form['boxz']))*unit.nanometer
