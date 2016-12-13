@@ -9,6 +9,7 @@ from math import sqrt
 import datetime
 import os
 import shutil
+import signal
 import sys
 import tempfile
 import webbrowser
@@ -218,7 +219,9 @@ def addHeavyAtoms():
     return showAddHydrogens()
 
 def showAddHydrogens():
-    unitCell = fixer.topology.getUnitCellDimensions().value_in_unit(unit.nanometer)
+    unitCell = fixer.topology.getUnitCellDimensions()
+    if unitCell is not None:
+        unitCell = unitCell.value_in_unit(unit.nanometer)
     boundingBox = tuple((max((pos[i] for pos in fixer.positions))-min((pos[i] for pos in fixer.positions))).value_in_unit(unit.nanometer) for i in range(3))
     return render_template('addHydrogens.html', unitCell=unitCell, boundingBox=boundingBox)
 
@@ -258,7 +261,12 @@ def addHydrogens():
     uploadedFiles['originalFile'] = uploadedFiles['file']
     pdb = StringIO()
     if session['pdbType'] == 'pdb':
-        PDBFile.writeFile(fixer.topology, fixer.positions, pdb, True)
+        try:
+            PDBFile.writeFile(fixer.topology, fixer.positions, pdb, True)
+        except:
+            # This can happen if the ids are too large to fit in the allowed space.
+            pdb = StringIO()
+            PDBFile.writeFile(fixer.topology, fixer.positions, pdb, False)
     else:
         PDBxFile.writeFile(fixer.topology, fixer.positions, pdb, True)
     temp = tempfile.TemporaryFile()
@@ -352,7 +360,7 @@ def startSimulation():
 @app.route('/stopSimulation', methods=['POST'])
 def stopSimulation():
     global scriptOutput, simulationProcess
-    simulationProcess.terminate()
+    os.kill(simulationProcess.pid, signal.SIGKILL)
     scriptOutput = None
     return ""
 
