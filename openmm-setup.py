@@ -524,11 +524,11 @@ os.chdir(outputDir)""")
         script.append("dcdReporter = DCDReporter('%s', %s)" % (session['dcdFilename'], session['dcdInterval']))
     if session['writeData']:
         args = ', '.join('%s=True' % field for field in session['dataFields'])
-        script.append("dataReporter = StateDataReporter('%s', %s, totalSteps=%s," % (session['dataFilename'], session['dataInterval'], session['steps']))
+        script.append("dataReporter = StateDataReporter('%s', %s, totalSteps=steps," % (session['dataFilename'], session['dataInterval']))
         script.append("    %s, separator='\\t')" % args)
         if isInternal:
             # Create a second reporting sending to stdout so we can display it in the browser.
-            script.append("consoleReporter = StateDataReporter(sys.stdout, %s, totalSteps=%s, %s, separator='\\t')" % (session['dataInterval'], session['steps'], args))
+            script.append("consoleReporter = StateDataReporter(sys.stdout, %s, totalSteps=steps, %s, separator='\\t')" % (session['dataInterval'], args))
     
     # Prepare the simulation
     
@@ -568,7 +568,16 @@ os.chdir(outputDir)""")
         script.append('    constraints=constraints, rigidWater=rigidWater%s)' % (', ewaldErrorTolerance=ewaldErrorTolerance' if nonbondedMethod == 'PME' else ''))
     if ensemble == 'npt':
         script.append('system.addForce(MonteCarloBarostat(pressure, temperature, barostatInterval))')
-    script.append('integrator = LangevinIntegrator(temperature, friction, dt)')
+    if fileType == 'pdb' and forcefield.startswith('amoeba'):
+        # Use a MTSIntegrator.
+        if ensemble in ('nvt', 'npt'):
+            script.append('system.addForce(AndersenThermostat(temperature, friction))')
+        script.append('for force in system.getForces():')
+        script.append('    if isinstance(force, AmoebaMultipoleForce) or isinstance(force, AmoebaVdwForce) or isinstance(force, AmoebaGeneralizedKirkwoodForce):')
+        script.append('        force.setForceGroup(1)')
+        script.append('integrator = MTSIntegrator(dt, [(0,2), (1,1)])')
+    else:
+        script.append('integrator = LangevinIntegrator(temperature, friction, dt)')
     if constraints != 'none':
         script.append('integrator.setConstraintTolerance(constraintTolerance)')
     script.append('simulation = Simulation(topology, system, integrator, platform%s)' % (', platformProperties' if session['platform'] in ('CUDA', 'OpenCL') else ''))
