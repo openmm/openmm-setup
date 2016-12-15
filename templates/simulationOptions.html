@@ -14,7 +14,7 @@
 {% endmacro %}
 
 {% macro datafieldbox(id, name, title) %}
-    <label><input type="checkbox" name="dataFields" value="{{ id }}" oninput="optionChanged()" {{ 'checked' if id in session['dataFields'] else '' }} title="{{ title }}"> {{ name }}</label><br/>
+    <label title="{{ title }}"><input type="checkbox" name="dataFields" value="{{ id }}" oninput="optionChanged()" {{ 'checked' if id in session['dataFields'] else '' }}> {{ name }}</label><br/>
 {% endmacro %}
 
 {% block body %}
@@ -189,7 +189,7 @@
             <button type="button" class="btn btn-default"
                 title="Run the simulation now, displaying results in your browser." onclick="runSimulation()">Run Simulation</button>
         </div>
-        <pre><code id="script" style="overflow:scroll"></code></pre>
+        <pre id="scriptContainer"><code id="script" class="python" style="overflow:scroll; white-space:pre"></code></pre>
     </div>
     </div>
 
@@ -239,9 +239,20 @@ function optionChanged() {
     var data = new FormData(form);
     request.addEventListener("load", function(event) {
         document.getElementById("script").textContent = event.target.responseText;
+        hljs.highlightBlock(document.getElementById("scriptContainer"));
+        updateScriptSize();
     });
     request.open("POST", "{{ url_for('setSimulationOptions') }}");
     request.send(data);
+}
+
+function updateScriptSize() {
+    container = document.getElementById("scriptContainer");
+    height = window.innerHeight-container.getBoundingClientRect().top-15;
+    if (height > 250)
+        container.style.height = height+"px";
+    else
+        container.style.height = "100%";
 }
 
 function runSimulation() {
@@ -263,6 +274,8 @@ function runSimulation() {
 
 // Configure the page based on initial values
 
-optionChanged()
+window.addEventListener("resize", updateScriptSize);
+updateScriptSize();
+optionChanged();
 </script>
 {% endblock %}
