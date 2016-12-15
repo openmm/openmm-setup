@@ -12,6 +12,7 @@ import shutil
 import signal
 import sys
 import tempfile
+import traceback
 import webbrowser
 import zipfile
 
@@ -384,7 +385,13 @@ def getSimulationOutput():
 
 def simulate(output, outputDir):
     script = createScript(True)
-    exec(script, {"output":output, "outputDir":outputDir})
+    try:
+        exec(script, {"output":output, "outputDir":outputDir})
+    except Exception as e:
+        output.send('\nThe simulation failed with the following error:\n\n')
+        output.send(str(e))
+        output.send('\n\nDetails:\n\n')
+        output.send(traceback.format_exc())
     output.send(None)
 
 def configureDefaultOptions():
