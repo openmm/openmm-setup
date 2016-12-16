@@ -15,7 +15,7 @@ This PDB file contains non-standard residues.  Do you want to convert them to st
                     <option value="{{ option }}" {{ 'selected' if option == residue[4] else '' }}>{{ option }}</option>' % (res, selected, res)
                 {% endfor %}
                 </select></td>
-                <td><input type="checkbox" name="convert" value="{{ loop.index0 }}"></td>
+                <td><input type="checkbox" name="convert" value="{{ loop.index0 }}" checked></td>
             </tr>
         {% endfor %}
     </table>

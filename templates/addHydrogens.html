@@ -22,7 +22,7 @@
     <h2>Add Water</h2>
     Add a water box surrounding the model?
     <p>
-    <label class="control-label"><input type="checkbox" id="addWater" name="addWater" onchange="optionChanged()"> Add water</label>
+    <label class="control-label"><input type="checkbox" id="addWater" name="addWater" onchange="optionChanged()" {{ '' if session['waterModel'] == 'implicit' else 'checked'}}> Add water</label>
     <div id="waterInputs">
         How do you want to select the size of the water box?
         <p/>

@@ -87,8 +87,10 @@ def configureFiles():
             return showConfigureFiles()
         saveUploadedFiles()
         session['forcefield'] = request.form.get('forcefield', '')
-        session['waterModel'] = request.form.get('waterModel', '')
-        session['amoebaWaterModel'] = request.form.get('amoebaWaterModel', '')
+        if 'amoeba' in session['forcefield']:
+            session['waterModel'] = request.form.get('amoebaWaterModel', '')
+        else:
+            session['waterModel'] = request.form.get('waterModel', '')
         session['cleanup'] = request.form.get('cleanup', '')
         if session['cleanup'] == 'yes':
             global fixer
@@ -396,10 +398,13 @@ def simulate(output, outputDir):
 
 def configureDefaultOptions():
     """Select default options based on the file format and force field."""
-    session['ensemble'] = 'npt'
+    implicitWater = False
+    if session['fileType'] == 'pdb' and session['waterModel'] == 'implicit':
+        implicitWater = True
+    session['ensemble'] = 'nvt' if implicitWater else 'npt'
     session['platform'] = 'CUDA'
     session['precision'] = 'single'
-    session['cutoff'] = '1.0'
+    session['cutoff'] = '2.0' if implicitWater else '1.0'
     session['ewaldTol'] = '0.0005'
     session['constraintTol'] = '0.000001'
     session['dt'] = '0.002'
@@ -409,7 +414,7 @@ def configureDefaultOptions():
     session['friction'] = '1.0'
     session['pressure'] = '1.0'
     session['barostatInterval'] = '25'
-    session['nonbondedMethod'] = 'PME'
+    session['nonbondedMethod'] = 'CutoffNonPeriodic' if implicitWater else 'PME'
     session['writeDCD'] = True
     session['dcdFilename'] = 'trajectory.dcd'
     session['dcdInterval'] = '10000'
@@ -463,7 +468,7 @@ os.chdir(outputDir)""")
         forcefield = session['forcefield']
         water = session['waterModel']
         if forcefield == 'amoeba2013.xml':
-            water = ('amoeba2013_gk.xml' if session['amoebaWaterModel'] == 'implicit' else None)
+            water = ('amoeba2013_gk.xml' if water == 'implicit' else None)
         elif forcefield == 'charmm_polar_2013.xml':
             water = None
         elif water == 'implicit':
@@ -487,7 +492,7 @@ os.chdir(outputDir)""")
     elif fileType == 'gromacs':
         script.append("gro = GromacsGroFile('%s')" % uploadedFiles['groFile'][0][1])
         script.append("top = GromacsTopFile('%s', includeDir='%s'," % (uploadedFiles['topFile'][0][1], session['gromacsIncludeDir']))
-        script.append("    periodicBoxVectors=gro.getPeriodicBoxVectors()')")
+        script.append("    periodicBoxVectors=gro.getPeriodicBoxVectors())")
 
     # System configuration
 
@@ -591,7 +596,7 @@ os.chdir(outputDir)""")
     script.append('simulation.context.setPositions(positions)')
     if fileType == 'amber':
         script.append('if inpcrd.boxVectors is not None:')
-        script.append('    simulation.context.setPeriodicBoxVectors(*inpcrd.boxVectors')
+        script.append('    simulation.context.setPeriodicBoxVectors(*inpcrd.boxVectors)')
     
     # Minimize and equilibrate
     
