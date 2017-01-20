@@ -19,9 +19,13 @@ you can install all of these with a single command:
 
 ## Using OpenMM Setup
 
-To run OpenMM Setup, clone this repository, then type
+To install OpenMM Setup, clone this repository, then type
 
-    python openmm-setup.py
+    python setup.py install
+
+You can then execute it by typing
+
+    openmm-setup
 
 The user interface is displayed through a web browser, but it is still a single user desktop application,
 not a web application.  It should automatically open a web browser displaying the user interface.  If for
