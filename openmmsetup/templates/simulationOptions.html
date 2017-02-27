@@ -32,7 +32,7 @@
             <p/>
             <div class="form-group">
             <label for="nonbondedMethod">Nonbonded Method</label>
-            {% if session['forcefield'].startswith('amoeba') %}
+            {% if 'forcefield' in session and session['forcefield'].startswith('amoeba') %}
                 {{ choice('nonbondedMethod', 'Select how to compute long range nonbonded interactions.', [
                     ('NoCutoff', 'No cutoff', 'The system is not periodic, and no cutoff is applied to nonbonded interactions.'),
                     ('PME', 'PME', 'Periodic boundary conditions are used.  Long range interactions are computed with Particle Mesh Ewald.')]) }}

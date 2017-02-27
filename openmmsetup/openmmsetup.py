@@ -356,7 +356,7 @@ def startSimulation():
         conn2.send(None)
         return ""
     # Run the simulation in a subprocess.
-    simulationProcess = Process(target=simulate, args=(conn2, outputDir))
+    simulationProcess = Process(target=simulate, args=(conn2, outputDir, createScript(True)))
     simulationProcess.start()
     return ""
 
@@ -385,8 +385,7 @@ def getSimulationOutput():
         scriptOutput = None
     return "".join(output)
 
-def simulate(output, outputDir):
-    script = createScript(True)
+def simulate(output, outputDir, script):
     try:
         exec(script, {"output":output, "outputDir":outputDir})
     except Exception as e:
