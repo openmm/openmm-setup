@@ -146,6 +146,7 @@ def showSelectChains():
 
 @app.route('/selectChains', methods=['POST'])
 def selectChains():
+    session['heterogens'] = request.form.get('heterogens', '')
     numChains = len(list(fixer.topology.chains()))
     request.form.getlist('include')
     deleteIndices = [i for i in range(numChains) if str(i) not in request.form.getlist('include')]
@@ -201,6 +202,10 @@ def convertResidues():
     return showAddHeavyAtoms()
 
 def showAddHeavyAtoms():
+    if session['heterogens'] == 'none':
+        fixer.removeHeterogens(False)
+    elif session['heterogens'] == 'water':
+        fixer.removeHeterogens(True)
     fixer.findMissingAtoms()
     allResidues = list(set(fixer.missingAtoms.keys()).union(fixer.missingTerminals.keys()))
     allResidues.sort(key=lambda x: x.index)
@@ -230,11 +235,6 @@ def showAddHydrogens():
 
 @app.route('/addHydrogens', methods=['POST'])
 def addHydrogens():
-    heterogens = request.form.get('heterogens', '')
-    if heterogens == 'none':
-        fixer.removeHeterogens(False)
-    elif heterogens == 'water':
-        fixer.removeHeterogens(True)
     if 'addHydrogens' in request.form:
         pH = float(request.form.get('ph', '7'))
         fixer.addMissingHydrogens(pH)

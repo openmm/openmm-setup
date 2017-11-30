@@ -2,14 +2,6 @@
 {% block title %}Add Hydrogens and Water{% endblock %}
 {% block body %}
 <form method="post" id="form" enctype="multipart/form-data" action="{{ url_for('addHydrogens') }}" class="form-horizontal">
-    <h2>Delete Heterogens</h2>
-    A heterogen is any residue other than a standard amino acid or nucleotide.  Do you want to delete heterogens?
-    <p/>
-    <select name="heterogens" class="form-control">
-        <option value="all" selected>Keep all heterogens</option>
-        <option value="water">Delete heterogens except water</option>
-        <option value="none">Delete all heterogens</option>
-    </select>
     <h2>Add Missing Hydrogens</h2>
     PDB files often do not include hydrogen atoms.  Do you want to add missing hydrogens?  The set of hydrogens that gets added
     will depend on what pH you want to simulate the system at.
