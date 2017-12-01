@@ -257,6 +257,13 @@ def addHydrogens():
         positiveIon = request.form['positiveion']+'+'
         negativeIon = request.form['negativeion']+'-'
         fixer.addSolvent(boxSize, padding, boxVectors, positiveIon, negativeIon, ionicStrength)
+    elif 'addMembrane' in request.form:
+        lipidType = request.form['lipidType']
+        padding = float(request.form['membranePadding'])*unit.nanometer
+        ionicStrength = float(request.form['ionicstrength'])*unit.molar
+        positiveIon = request.form['positiveion']+'+'
+        negativeIon = request.form['negativeion']+'-'
+        fixer.addMembrane(lipidType=lipidType, minimumPadding=padding, positiveIon=positiveIon, negativeIon=negativeIon, ionicStrength=ionicStrength)
     
     # Save the new PDB file.
     
