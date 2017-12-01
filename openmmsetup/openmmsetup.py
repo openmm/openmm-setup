@@ -87,10 +87,7 @@ def configureFiles():
             return showConfigureFiles()
         saveUploadedFiles()
         session['forcefield'] = request.form.get('forcefield', '')
-        if 'amoeba' in session['forcefield']:
-            session['waterModel'] = request.form.get('amoebaWaterModel', '')
-        else:
-            session['waterModel'] = request.form.get('waterModel', '')
+        session['waterModel'] = request.form.get('waterModel', '')
         session['cleanup'] = request.form.get('cleanup', '')
         if session['cleanup'] == 'yes':
             global fixer
@@ -129,6 +126,7 @@ def getCurrentStructure():
 
 def showSelectChains():
     chains = []
+    hasHeterogen = False
     for chain in fixer.topology.chains():
         residues = list(r.name for r in chain.residues())
         if any(r in proteinResidues for r in residues):
@@ -139,8 +137,9 @@ def showSelectChains():
             content = "DNA"
         else:
             content = ', '.join(set(residues))
+            hasHeterogen = True
         chains.append((chain.id, len(residues), content))
-    if len(chains) < 2:
+    if len(chains) < 2 and not hasHeterogen:
         return showAddResidues()
     return render_template('selectChains.html', chains=chains)
 
