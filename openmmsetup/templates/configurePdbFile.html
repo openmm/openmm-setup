@@ -21,32 +21,19 @@ Select the input file and options for how to model it.
     <div class="form-group">
     <label for="forcefield" class="control-label col-md-2">Force Field</label>
     <div class="col-md-10"><select name="forcefield" id="forcefield" class="form-control" onchange="optionChanged()">
+        <option value="amber14-all.xml" selected>AMBER14</option>
         <option value="amber99sb.xml">AMBER99SB</option>
-        <option value="amber99sbildn.xml" selected>AMBER99SB-ILDN</option>
+        <option value="amber99sbildn.xml">AMBER99SB-ILDN</option>
         <option value="amber03.xml">AMBER03</option>
         <option value="amber10.xml">AMBER10</option>
         <option value="amoeba2013.xml">AMOEBA 2013</option>
+        <option value="charmm36.xml">CHARMM36</option>
         <option value="charmm_polar_2013.xml">CHARMM Polar 2013</option>
     </select></div>
     </div>
     <div id="waterModelRow" class="form-group">
-    <label for="waterModel" class="control-label col-md-2">Water Model</label>
-    <div class="col-md-10"><select name="waterModel" id="waterModel" class="form-control">
-        <option value="tip3p.xml">TIP3P</option>
-        <option value="tip3pfb.xml" selected>TIP3P-FB</option>
-        <option value="tip4pew.xml">TIP4P-Ew</option>
-        <option value="tip4pfb.xml">TIP4P-FB</option>
-        <option value="tip5p.xml">TIP5P</option>
-        <option value="spce.xml">SPC/E</option>
-        <option value="implicit">OBC (implicit solvent)</option>
-    </select></div>
-    </div>
-    <div id="amoebaWaterModelRow" class="form-group" hidden>
-    <label for="amoebaWaterModel" class="control-label col-md-2">Water Model</label>
-    <div class="col-md-10"><select name="amoebaWaterModel" id="amoebaWaterModel" class="form-control">
-        <option value="explicit">Explicit</option>
-        <option value="implicit">Implicit</option>
-    </select></div>
+        <label for="waterModel" class="control-label col-md-2">Water Model</label>
+        <div class="col-md-10"><select name="waterModel" id="waterModel" class="form-control"></select></div>
     </div>
     <p>PDB files often need to be cleaned up before they can be simulated.  For example, you may need to
     add missing atoms, remove unwanted chains, or add a water box.  Do you want to do this now?</p>
@@ -56,12 +43,73 @@ Select the input file and options for how to model it.
     <input type="submit" value="Continue" id="continue" class="btn" disabled="true"/>
 </form>
 <script>
+var amber14WaterModels = [
+        ["amber14/tip3p.xml", "TIP3P", false],
+        ["amber14/tip3pfb.xml", "TIP3P-FB", true],
+        ["amber14/spce.xml", "SPC/E", false],
+        ["amber14/tip4pew.xml", "TIP4P-Ew", false],
+        ["amber14/tip4pfb.xml", "TIP4P-FB", false]
+]
+
+var charmm36WaterModels = [
+        ["charmm36/water.xml", "CHARMM default", true],
+        ["charmm36/tip3p-pme-b.xml", "TIP3P-PME-B", false],
+        ["charmm36/tip3p-pme-f.xml", "TIP3P-PME-F", false],
+        ["charmm36/spce.xml", "SPC/E", false],
+        ["charmm36/tip4pew.xml", "TIP4P-Ew", false],
+        ["charmm36/tip4p2005.xml", "TIP4P-2005", false],
+        ["charmm36/tip5p.xml", "TIP5P", false],
+        ["charmm36/tip5pew.xml", "TIP5P-Ew", false]
+]
+
+var oldAmberWaterModels = [
+        ["tip3p.xml", "TIP3P", false],
+        ["tip3pfb.xml", "TIP3P-FB", true],
+        ["spce.xml", "SPC/E", false],
+        ["tip4pew.xml", "TIP4P-Ew", false],
+        ["tip4pfb.xml", "TIP4P-FB", false],
+        ["tip5p.xml", "TIP5P", false],
+        ["implicit", "OBC (implicit solvent)", false]
+]
+
+var amoebaWaterModels = [
+        ["explicit", "Explicit", true],
+        ["implicit", "Implicit", false]
+]
+
 function optionChanged() {
     // Update UI elements.
 
     forcefield = document.getElementById("forcefield").value;
-    document.getElementById("waterModelRow").hidden = (forcefield == 'amoeba2013.xml' || forcefield == 'charmm_polar_2013.xml');
-    document.getElementById("amoebaWaterModelRow").hidden = (forcefield != 'amoeba2013.xml');
+    waterSelect = document.getElementById("waterModel");
+    currentWater = waterSelect.value;
+    if (forcefield == 'charmm_polar_2013.xml')
+        document.getElementById("waterModelRow").hidden = true;
+    else {
+        document.getElementById("waterModelRow").hidden = false;
+        if (forcefield == "amber14-all.xml")
+            models = amber14WaterModels;
+        else if (forcefield == "charmm36.xml")
+            models = charmm36WaterModels;
+        else if (forcefield == "amoeba2013.xml")
+            models = amoebaWaterModels;
+        else
+            models = oldAmberWaterModels;
+        while (waterSelect.length > 0)
+            waterSelect.remove(0)
+        for (i = 0; i < models.length; i++) {
+            option = document.createElement("option");
+            option.value = models[i][0];
+            option.text = models[i][1];
+            waterSelect.add(option);
+        }
+        for (i = 0; i < models.length; i++)
+            if (models[i][2])
+                waterSelect.selectedIndex = i;
+        for (i = 0; i < models.length; i++)
+            if (currentWater == models[i][0])
+                waterSelect.selectedIndex = i;
+    }
     files = document.getElementById("file").files;
     document.getElementById("file_label").textContent = (files.length == 0 ? "" : files[0].name);
     document.getElementById('continue').disabled = !document.getElementById("file").value;

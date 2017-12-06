@@ -22,6 +22,14 @@ This PDB file contains {{ chains|length }} chains.  Select which ones to include
         <button type="button" id="start" class="btn btn-default" onclick="setCheckboxes(false)">Select None</button>
     </div>
     <p/>
+    A heterogen is any residue other than a standard amino acid or nucleotide.  Do you want to delete heterogens?
+    <p/>
+    <select name="heterogens" id="heterogens" class="form-control" onchange="optionChanged()">
+        <option value="all" selected>Keep all heterogens</option>
+        <option value="water">Delete heterogens except water</option>
+        <option value="none">Delete all heterogens</option>
+    </select>
+    <p/>
     <input type="submit" value="Continue" id="continue" class="btn"/>
     </div>
     <div class="col-md-6" id="viewport" style="width:500px; height:500px">
@@ -41,11 +49,18 @@ function optionChanged() {
         any |= checkboxes[i].checked
     document.getElementById('continue').disabled = !any;
     if (window['molStructure'] != undefined) {
+        heterogens = document.getElementById('heterogens').value
         molStructure.clearRepresentations();
         {% for chain in chains %}
-        if (checkboxes[{{ loop.index0 }}].checked)
+        if (checkboxes[{{ loop.index0 }}].checked) {
+            selection = ":"+String.fromCharCode({{ loop.index0+65 }})
+            if (heterogens == 'water')
+                selection += " and (protein or nucleic or water)"
+            if (heterogens == 'none')
+                selection += " and (protein or nucleic)"
             molStructure.addRepresentation("{{ "cartoon" if chain[2] in ('DNA', 'Protein') else "ball+stick" }}",
-                                           {sele:":"+String.fromCharCode({{ loop.index0+65 }})});
+                                           {sele:selection});
+        }
         {% endfor %}
     }
 }

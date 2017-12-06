@@ -13,12 +13,12 @@ from setuptools import setup, find_packages
 DOCLINES = __doc__.split("\n")
 
 ########################
-__version__ = '1.0'
+__version__ = '1.1'
 VERSION = __version__
 ISRELEASED = False
 ########################
 CLASSIFIERS = """\
-Development Status :: 4 - Beta
+Development Status :: 5 - Production/Stable
 Intended Audience :: Science/Research
 Intended Audience :: End Users/Desktop
 License :: OSI Approved :: MIT License
@@ -54,6 +54,6 @@ setup(
     packages=find_packages(),
     package_data={'openmmsetup': find_package_data()},
     zip_safe=False,
-    install_requires=['flask', 'openmm >= 7.0', 'pdbfixer'],
+    install_requires=['flask', 'openmm >= 7.2', 'pdbfixer >= 1.5'],
     entry_points={'console_scripts': ['openmm-setup = openmmsetup.openmmsetup:main']})
 

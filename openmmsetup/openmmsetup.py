@@ -87,10 +87,7 @@ def configureFiles():
             return showConfigureFiles()
         saveUploadedFiles()
         session['forcefield'] = request.form.get('forcefield', '')
-        if 'amoeba' in session['forcefield']:
-            session['waterModel'] = request.form.get('amoebaWaterModel', '')
-        else:
-            session['waterModel'] = request.form.get('waterModel', '')
+        session['waterModel'] = request.form.get('waterModel', '')
         session['cleanup'] = request.form.get('cleanup', '')
         if session['cleanup'] == 'yes':
             global fixer
@@ -129,6 +126,7 @@ def getCurrentStructure():
 
 def showSelectChains():
     chains = []
+    hasHeterogen = False
     for chain in fixer.topology.chains():
         residues = list(r.name for r in chain.residues())
         if any(r in proteinResidues for r in residues):
@@ -139,13 +137,15 @@ def showSelectChains():
             content = "DNA"
         else:
             content = ', '.join(set(residues))
+            hasHeterogen = True
         chains.append((chain.id, len(residues), content))
-    if len(chains) < 2:
+    if len(chains) < 2 and not hasHeterogen:
         return showAddResidues()
     return render_template('selectChains.html', chains=chains)
 
 @app.route('/selectChains', methods=['POST'])
 def selectChains():
+    session['heterogens'] = request.form.get('heterogens', '')
     numChains = len(list(fixer.topology.chains()))
     request.form.getlist('include')
     deleteIndices = [i for i in range(numChains) if str(i) not in request.form.getlist('include')]
@@ -201,6 +201,10 @@ def convertResidues():
     return showAddHeavyAtoms()
 
 def showAddHeavyAtoms():
+    if session['heterogens'] == 'none':
+        fixer.removeHeterogens(False)
+    elif session['heterogens'] == 'water':
+        fixer.removeHeterogens(True)
     fixer.findMissingAtoms()
     allResidues = list(set(fixer.missingAtoms.keys()).union(fixer.missingTerminals.keys()))
     allResidues.sort(key=lambda x: x.index)
@@ -230,11 +234,6 @@ def showAddHydrogens():
 
 @app.route('/addHydrogens', methods=['POST'])
 def addHydrogens():
-    heterogens = request.form.get('heterogens', '')
-    if heterogens == 'none':
-        fixer.removeHeterogens(False)
-    elif heterogens == 'water':
-        fixer.removeHeterogens(True)
     if 'addHydrogens' in request.form:
         pH = float(request.form.get('ph', '7'))
         fixer.addMissingHydrogens(pH)
@@ -258,6 +257,13 @@ def addHydrogens():
         positiveIon = request.form['positiveion']+'+'
         negativeIon = request.form['negativeion']+'-'
         fixer.addSolvent(boxSize, padding, boxVectors, positiveIon, negativeIon, ionicStrength)
+    elif 'addMembrane' in request.form:
+        lipidType = request.form['lipidType']
+        padding = float(request.form['membranePadding'])*unit.nanometer
+        ionicStrength = float(request.form['ionicstrength'])*unit.molar
+        positiveIon = request.form['positiveion']+'+'
+        negativeIon = request.form['negativeion']+'-'
+        fixer.addMembrane(lipidType=lipidType, minimumPadding=padding, positiveIon=positiveIon, negativeIon=negativeIon, ionicStrength=ionicStrength)
     
     # Save the new PDB file.
     

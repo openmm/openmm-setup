@@ -2,14 +2,6 @@
 {% block title %}Add Hydrogens and Water{% endblock %}
 {% block body %}
 <form method="post" id="form" enctype="multipart/form-data" action="{{ url_for('addHydrogens') }}" class="form-horizontal">
-    <h2>Delete Heterogens</h2>
-    A heterogen is any residue other than a standard amino acid or nucleotide.  Do you want to delete heterogens?
-    <p/>
-    <select name="heterogens" class="form-control">
-        <option value="all" selected>Keep all heterogens</option>
-        <option value="water">Delete heterogens except water</option>
-        <option value="none">Delete all heterogens</option>
-    </select>
     <h2>Add Missing Hydrogens</h2>
     PDB files often do not include hydrogen atoms.  Do you want to add missing hydrogens?  The set of hydrogens that gets added
     will depend on what pH you want to simulate the system at.
@@ -19,11 +11,13 @@
     <label class="control-label col-md-2">pH</label>
     <div class="col-md-10"><input type="text" id="phfield" name="ph" value="7.0" class="form-control"></div>
     </div>
-    <h2>Add Water</h2>
-    Add a water box surrounding the model?
+    <h2>Add Water/Membrane</h2>
+    Add a water box or membrane surrounding the model?
     <p>
-    <label class="control-label"><input type="checkbox" id="addWater" name="addWater" onchange="optionChanged()" {{ '' if session['waterModel'] == 'implicit' else 'checked'}}> Add water</label>
-    <div id="waterInputs">
+    <label class="control-label"><input type="checkbox" id="addWater" name="addWater" onchange="waterBoxChanged()"> Add water box</label>
+    <p>
+    <label class="control-label"><input type="checkbox" id="addMembrane" name="addMembrane" onchange="membraneBoxChanged()"> Add membrane and water</label>
+    <div id="waterInputs" class="col-md-offset-1">
         How do you want to select the size of the water box?
         <p/>
         <label class="control-label"><input id="customBoxRadio" type="radio" name="boxType" value="custom" onchange="optionChanged()"> Specify the box dimensions directly</label>
@@ -69,18 +63,36 @@
             </div>
             </div>
         </div>
+    </div>
+    <div id="membraneInputs" class="col-md-offset-1">
+        The membrane will lie in the XY plane and be centered at Z=0.  Make sure the protein is properly oriented and positioned.
+        When possible, it is easiest to use a PDB file from <a href="http://opm.phar.umich.edu/">OPM</a> since they are already properly positioned.
         <p>
-        Ions will be added to neutralize the model.  You can optionally add more ions based on a desired bulk ionic strength.
-        <p>
         <div class="form-group">
-            <label class="control-label col-md-3" for="ionicstrengthfield">Ionic strength (molar)</label><div class="col-md-9"><input type="text" id="ionicstrengthfield" name="ionicstrength" value="0.0" class="form-control"></div>
+            <label class="control-label col-md-3" for="lipidType">Lipid type:</label>
+            <div class="col-md-9"><select id="lipidType" name="lipidType" class="form-control">
+                <option value="POPC" selected="selected">POPC</option>
+                <option value="POPE">POPE</option>
+            </select></div>
         </div>
         <div class="form-group">
-            <label class="control-label col-md-3" for="positiveion">Positive ion</label><div class="col-md-9"><select name="positiveion" id="positiveion" class="form-control"><option value="Cs">Cs+</option><option value="K">K+</option><option value="Li">Li+</option><option value="Na" selected>Na+</option><option value="Rb">Rb+</option></select></div>
+            <label class="control-label col-md-3" for="membranePadding">Minimum padding around protein (nm):</label>
+            <div class="col-md-9"><input type="text" id="membranePadding" name="membranePadding" value="1.0" size="5" class="form-control"></div>
         </div>
-        <div class="form-group">
-            <label class="control-label col-md-3" for="negativeion">Negative ion</label><div class="col-md-9"><select name="negativeion" id="negativeion" class="form-control"><option value="Cl" selected>Cl-</option><option value="Br">Br-</option><option value="F">F-</option><option value="I">I-</option></select></div>
-        </div>
+    </div>
+    <div id="ionInputs">
+    <p>
+    Ions will be added to neutralize the model.  You can optionally add more ions based on a desired bulk ionic strength.
+    <p>
+    <div class="form-group">
+        <label class="control-label col-md-3" for="ionicstrengthfield">Ionic strength (molar)</label><div class="col-md-9"><input type="text" id="ionicstrengthfield" name="ionicstrength" value="0.0" class="form-control"></div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-md-3" for="positiveion">Positive ion</label><div class="col-md-9"><select name="positiveion" id="positiveion" class="form-control"><option value="Cs">Cs+</option><option value="K">K+</option><option value="Li">Li+</option><option value="Na" selected>Na+</option><option value="Rb">Rb+</option></select></div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-md-3" for="negativeion">Negative ion</label><div class="col-md-9"><select name="negativeion" id="negativeion" class="form-control"><option value="Cl" selected>Cl-</option><option value="Br">Br-</option><option value="F">F-</option><option value="I">I-</option></select></div>
+    </div>
     </div>
     <p>
     <input type="button" value="Continue" class="btn" onclick="if (validateForm()) submitWithSpinner('form')"/>
@@ -127,24 +139,45 @@ function validateForm() {
         }
         var geombox = document.getElementById("geometricBoxRadio").checked
         var padsize = document.getElementById("geomPadding").value
-        if (geombox && !(padsize > 0)) {
-            showError("Box padding must be a positive number.")
+        if (geombox && padsize < 0) {
+            showError("Box padding cannot be negative.")
             return false
         }
         var strength = document.getElementById("ionicstrengthfield").value
-        if (!(strength >= 0)) {
-            showError("Ionic strength must be a nonnegative number.")
+        if (strength < 0) {
+            showError("Ionic strength cannot be negative.")
+            return false
+        }
+    }
+    if (document.getElementById("addMembrane").checked) {
+        var padsize = document.getElementById("membranePadding").value
+        if (padsize < 0) {
+            showError("Membrane padding cannot be negative.")
             return false
         }
     }
     return true
 }
 
+function waterBoxChanged() {
+    document.getElementById("addMembrane").checked = false;
+    optionChanged()
+}
+
+function membraneBoxChanged() {
+    document.getElementById("addWater").checked = false;
+    optionChanged()
+}
+
 function optionChanged() {
     // Update UI elements.
 
+    water = document.getElementById("addWater").checked;
+    membrane = document.getElementById("addMembrane").checked;
     document.getElementById("pHrow").hidden = !document.getElementById("addHydrogens").checked;
-    document.getElementById("waterInputs").hidden = !document.getElementById("addWater").checked;
+    document.getElementById("waterInputs").hidden = !water;
+    document.getElementById("membraneInputs").hidden = !membrane;
+    document.getElementById("ionInputs").hidden = !(water || membrane);
     document.getElementById("customBoxDimensions").hidden = !document.getElementById("customBoxRadio").checked;
     document.getElementById("paddedBoxDimensions").hidden = !document.getElementById("geometricBoxRadio").checked;
 }
