@@ -140,6 +140,7 @@ def showSelectChains():
             hasHeterogen = True
         chains.append((chain.id, len(residues), content))
     if len(chains) < 2 and not hasHeterogen:
+        session['heterogens'] = 'all'
         return showAddResidues()
     return render_template('selectChains.html', chains=chains)
 
