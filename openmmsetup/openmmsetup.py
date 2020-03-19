@@ -301,7 +301,7 @@ def setSimulationOptions():
         session[key] = request.form[key]
     session['writeDCD'] = 'writeDCD' in request.form
     session['writeData'] = 'writeData' in request.form
-    session['writeCheckpoin'] = 'writeCheckpoint' in request.form
+    session['writeCheckpoint'] = 'writeCheckpoint' in request.form
     session['dataFields'] = request.form.getlist('dataFields')
     return createScript()
 
