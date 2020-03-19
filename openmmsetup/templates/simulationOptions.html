@@ -173,6 +173,19 @@
                 </div>
                 </div>
             </div>
+            <div class="form-group">
+            <label><input type="checkbox" name="writeCheckpoint" id="writeCheckpoint" oninput="optionChanged()" {{ 'checked' if session['writeCheckpoint'] else '' }}> Save checkpoints to a file</label>
+            </div>
+            <div id="checkpointFileOptions">
+                <div class="form-group">
+                <label for="checkpointFilename">Checkpoint Filename</label>
+                {{ textfield('checkpointFilename', 'The filename for the checkpoint file.') }}
+                </div>
+                <div class="form-group">
+                <label for="checkpointInterval">Checkpoint Interval (steps)</label>
+                {{ textfield('checkpointInterval', 'The interval at which to write checkpoints, measured in time steps.') }}
+                </div>
+            </div>
             </div>
         </div>
     </div>
@@ -231,6 +244,8 @@ function optionChanged() {
     document.getElementById("dcdFileOptions").hidden = !writeDCD;
     writeData = document.getElementById("writeData").checked;
     document.getElementById("logFileOptions").hidden = !writeData;
+    writeCheckpoint = document.getElementById("writeCheckpoint").checked;
+    document.getElementById("checkpointFileOptions").hidden = !writeCheckpoint;
     
     // Submit the form.
     
