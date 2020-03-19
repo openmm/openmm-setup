@@ -301,6 +301,7 @@ def setSimulationOptions():
         session[key] = request.form[key]
     session['writeDCD'] = 'writeDCD' in request.form
     session['writeData'] = 'writeData' in request.form
+    session['writeCheckpoin'] = 'writeCheckpoint' in request.form
     session['dataFields'] = request.form.getlist('dataFields')
     return createScript()
 
@@ -428,6 +429,9 @@ def configureDefaultOptions():
     session['dataFilename'] = 'log.txt'
     session['dataInterval'] = '1000'
     session['dataFields'] = ['step', 'speed' ,'progress', 'potentialEnergy', 'temperature']
+    session['writeCheckpoint'] = True
+    session['checkpointFilename'] = 'checkpoint.chk'
+    session['checkpointInterval'] = '10000'
     isAmoeba = session['fileType'] == 'pdb' and 'amoeba' in session['forcefield']
     if isAmoeba:
         session['constraints'] = 'none'
@@ -547,6 +551,8 @@ os.chdir(outputDir)""")
         if isInternal:
             # Create a second reporting sending to stdout so we can display it in the browser.
             script.append("consoleReporter = StateDataReporter(sys.stdout, %s, totalSteps=steps, %s, separator='\\t')" % (session['dataInterval'], args))
+    if session['writeCheckpoint']:
+        script.append("checkpointReporter = CheckpointReporter('%s', %s)" % (session['checkpointFilename'], session['checkpointInterval']))
     
     # Prepare the simulation
     
@@ -623,6 +629,8 @@ os.chdir(outputDir)""")
         script.append('simulation.reporters.append(dataReporter)')
         if isInternal:
             script.append('simulation.reporters.append(consoleReporter)')
+    if session['writeCheckpoint']:
+        script.append('simulation.reporters.append(checkpointReporter)')
     script.append('simulation.currentStep = 0')
     script.append('simulation.step(steps)')
 
