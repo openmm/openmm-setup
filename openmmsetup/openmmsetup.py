@@ -12,6 +12,8 @@ import shutil
 import signal
 import sys
 import tempfile
+import threading
+import time
 import traceback
 import webbrowser
 import zipfile
@@ -408,13 +410,20 @@ def configureDefaultOptions():
     implicitWater = False
     if session['fileType'] == 'pdb' and session['waterModel'] == 'implicit':
         implicitWater = True
+    isAmoeba = session['fileType'] == 'pdb' and 'amoeba' in session['forcefield']
+    isDrude = session['fileType'] == 'pdb' and session['forcefield'].startswith('charmm_polar')
     session['ensemble'] = 'nvt' if implicitWater else 'npt'
     session['platform'] = 'CUDA'
     session['precision'] = 'single'
     session['cutoff'] = '2.0' if implicitWater else '1.0'
     session['ewaldTol'] = '0.0005'
     session['constraintTol'] = '0.000001'
-    session['dt'] = '0.004'
+    if isAmoeba:
+        session['dt'] = '0.002'
+    elif isDrude:
+        session['dt'] = '0.001'
+    else:
+        session['dt'] = '0.004'
     session['steps'] = '1000000'
     session['equilibrationSteps'] = '1000'
     session['temperature'] = '300'
@@ -432,7 +441,6 @@ def configureDefaultOptions():
     session['writeCheckpoint'] = True
     session['checkpointFilename'] = 'checkpoint.chk'
     session['checkpointInterval'] = '10000'
-    isAmoeba = session['fileType'] == 'pdb' and 'amoeba' in session['forcefield']
     if isAmoeba:
         session['constraints'] = 'none'
     else:
@@ -599,7 +607,7 @@ os.chdir(outputDir)""")
         script.append('        force.setForceGroup(1)')
         script.append('integrator = MTSLangevinIntegrator(temperature, friction, dt, [(0,2), (1,1)])')
     elif fileType == 'pdb' and forcefield.startswith('charmm_polar'):
-        script.append('integrator = DrudeNoseHooverIntegrator(temperature, friction, 1*kelvin, friction, dt)')
+        script.append('integrator = DrudeLangevinIntegrator(temperature, friction, 1*kelvin, friction, dt)')
     else:
         script.append('integrator = LangevinMiddleIntegrator(temperature, friction, dt)')
     if constraints != 'none':
@@ -638,8 +646,14 @@ os.chdir(outputDir)""")
 
 
 def main():
-    url = 'http://127.0.0.1:5000'
-    webbrowser.open(url)
+
+    def open_browser():
+        # Give the server a moment to start before opening the browser.
+        time.sleep(1)
+        url = 'http://127.0.0.1:5000'
+        webbrowser.open(url)
+
+    threading.Thread(target=open_browser).start()
     app.run(debug=False)
 
 if __name__ == '__main__':
