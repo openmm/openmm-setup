@@ -28,7 +28,7 @@ Select the input file and options for how to model it.
         <option value="amber10.xml">AMBER10</option>
         <option value="amoeba2013.xml">AMOEBA 2013</option>
         <option value="charmm36.xml">CHARMM36</option>
-        <option value="charmm_polar_2013.xml">CHARMM Polar 2013</option>
+        <option value="charmm_polar_2019.xml">CHARMM Polar 2019</option>
     </select></div>
     </div>
     <div id="waterModelRow" class="form-group">
@@ -83,7 +83,7 @@ function optionChanged() {
     forcefield = document.getElementById("forcefield").value;
     waterSelect = document.getElementById("waterModel");
     currentWater = waterSelect.value;
-    if (forcefield == 'charmm_polar_2013.xml')
+    if (forcefield == 'charmm_polar_2019.xml')
         document.getElementById("waterModelRow").hidden = true;
     else {
         document.getElementById("waterModelRow").hidden = false;

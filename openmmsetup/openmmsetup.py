@@ -89,11 +89,11 @@ def configureFiles():
         session['forcefield'] = request.form.get('forcefield', '')
         session['waterModel'] = request.form.get('waterModel', '')
         session['cleanup'] = request.form.get('cleanup', '')
+        file, name = uploadedFiles['file'][0]
+        file.seek(0, 0)
+        session['pdbType'] = _guessFileFormat(file, name)
         if session['cleanup'] == 'yes':
             global fixer
-            file, name = uploadedFiles['file'][0]
-            file.seek(0, 0)
-            session['pdbType'] = _guessFileFormat(file, name)
             if session['pdbType'] == 'pdb':
                 fixer = PDBFixer(pdbfile=file)
             else:
@@ -414,7 +414,7 @@ def configureDefaultOptions():
     session['cutoff'] = '2.0' if implicitWater else '1.0'
     session['ewaldTol'] = '0.0005'
     session['constraintTol'] = '0.000001'
-    session['dt'] = '0.002'
+    session['dt'] = '0.004'
     session['steps'] = '1000000'
     session['equilibrationSteps'] = '1000'
     session['temperature'] = '300'
@@ -479,7 +479,7 @@ os.chdir(outputDir)""")
         water = session['waterModel']
         if forcefield == 'amoeba2013.xml':
             water = ('amoeba2013_gk.xml' if water == 'implicit' else None)
-        elif forcefield == 'charmm_polar_2013.xml':
+        elif forcefield == 'charmm_polar_2019.xml':
             water = None
         elif water == 'implicit':
             models = {'amber99sb.xml': 'amber99_obc.xml',
@@ -573,7 +573,7 @@ os.chdir(outputDir)""")
     elif fileType == 'gromacs':
         script.append('topology = top.topology')
         script.append('positions = gro.positions')
-    if fileType == 'pdb' and (forcefield == 'charmm_polar_2013.xml' or water in ('tip4pew.xml', 'tip4pfb.xml', 'tip5p.xml')):
+    if fileType == 'pdb' and (forcefield == 'charmm_polar_2019.xml' or water in ('tip4pew.xml', 'tip4pfb.xml', 'tip5p.xml')):
         script.append('modeller = Modeller(topology, positions)')
         script.append('modeller.addExtraParticles(forcefield)')
         script.append('topology = modeller.topology')
@@ -593,15 +593,15 @@ os.chdir(outputDir)""")
     if ensemble == 'npt':
         script.append('system.addForce(MonteCarloBarostat(pressure, temperature, barostatInterval))')
     if fileType == 'pdb' and forcefield.startswith('amoeba'):
-        # Use a MTSIntegrator.
-        if ensemble in ('nvt', 'npt'):
-            script.append('system.addForce(AndersenThermostat(temperature, friction))')
+        # Use a MTSLangevinIntegrator.
         script.append('for force in system.getForces():')
         script.append('    if isinstance(force, AmoebaMultipoleForce) or isinstance(force, AmoebaVdwForce) or isinstance(force, AmoebaGeneralizedKirkwoodForce):')
         script.append('        force.setForceGroup(1)')
-        script.append('integrator = MTSIntegrator(dt, [(0,2), (1,1)])')
+        script.append('integrator = MTSLangevinIntegrator(temperature, friction, dt, [(0,2), (1,1)])')
+    elif fileType == 'pdb' and forcefield.startswith('charmm_polar'):
+        script.append('integrator = DrudeNoseHooverIntegrator(temperature, friction, 1*kelvin, friction, dt)')
     else:
-        script.append('integrator = LangevinIntegrator(temperature, friction, dt)')
+        script.append('integrator = LangevinMiddleIntegrator(temperature, friction, dt)')
     if constraints != 'none':
         script.append('integrator.setConstraintTolerance(constraintTolerance)')
     script.append('simulation = Simulation(topology, system, integrator, platform%s)' % (', platformProperties' if session['platform'] in ('CUDA', 'OpenCL') else ''))
