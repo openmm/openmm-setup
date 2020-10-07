@@ -249,7 +249,7 @@ def addHydrogens():
             if geometry == 'cube':
                 padding = geompadding
             elif geometry == 'truncatedOctahedron':
-                vectors = mm.Vec3(1,0,0), mm.Vec3(1/3,2*sqrt(2)/3,0), mm.Vec3(-1/3,1/3,sqrt(6)/3)
+                vectors = mm.Vec3(1,0,0), mm.Vec3(1/3,2*sqrt(2)/3,0), mm.Vec3(-1/3,sqrt(2)/3,sqrt(6)/3)
                 boxVectors = [(maxSize+geompadding)*v for v in vectors]
             elif geometry == 'rhombicDodecahedron':
                 vectors = mm.Vec3(1,0,0), mm.Vec3(0,1,0), mm.Vec3(0.5,0.5,sqrt(2)/2)
