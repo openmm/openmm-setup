@@ -305,6 +305,7 @@ def setSimulationOptions():
     session['writeData'] = 'writeData' in request.form
     session['writeCheckpoint'] = 'writeCheckpoint' in request.form
     session['dataFields'] = request.form.getlist('dataFields')
+    session['hmr'] = 'hmr' in request.form
     return createScript()
 
 @app.route('/downloadScript')
@@ -418,6 +419,8 @@ def configureDefaultOptions():
     session['cutoff'] = '2.0' if implicitWater else '1.0'
     session['ewaldTol'] = '0.0005'
     session['constraintTol'] = '0.000001'
+    session['hmr'] = True
+    session['hmrMass'] = '1.5'
     if isAmoeba:
         session['dt'] = '0.002'
     elif isDrude:
@@ -530,6 +533,8 @@ os.chdir(outputDir)""")
     script.append('rigidWater = %s' % ('False' if constraints == 'none' else 'True'))
     if constraints != 'none':
         script.append('constraintTolerance = %s' % session['constraintTol'])
+    if session['hmr']:
+        script.append('hydrogenMass = %s*amu' % session['hmrMass'])
 
     # Integration options
 
@@ -586,18 +591,19 @@ os.chdir(outputDir)""")
         script.append('modeller.addExtraParticles(forcefield)')
         script.append('topology = modeller.topology')
         script.append('positions = modeller.positions')
+    hmrOptions = ', hydrogenMass=hydrogenMass' if session['hmr'] else ''
     if fileType  == 'pdb':
         script.append('system = forcefield.createSystem(topology, nonbondedMethod=nonbondedMethod,%s' % (' nonbondedCutoff=nonbondedCutoff,' if nonbondedMethod != 'NoCutoff' else ''))
-        script.append('    constraints=constraints, rigidWater=rigidWater%s)' % (', ewaldErrorTolerance=ewaldErrorTolerance' if nonbondedMethod == 'PME' else ''))
+        script.append('    constraints=constraints, rigidWater=rigidWater%s%s)' % (', ewaldErrorTolerance=ewaldErrorTolerance' if nonbondedMethod == 'PME' else '', hmrOptions))
     elif fileType == 'amber':
         script.append('system = prmtop.createSystem(nonbondedMethod=nonbondedMethod,%s' % (' nonbondedCutoff=nonbondedCutoff,' if nonbondedMethod != 'NoCutoff' else ''))
-        script.append('    constraints=constraints, rigidWater=rigidWater%s)' % (', ewaldErrorTolerance=ewaldErrorTolerance' if nonbondedMethod == 'PME' else ''))
+        script.append('    constraints=constraints, rigidWater=rigidWater%s%s)' % (', ewaldErrorTolerance=ewaldErrorTolerance' if nonbondedMethod == 'PME' else '', hmrOptions))
     elif fileType == 'charmm':
         script.append('system = psf.createSystem(params, nonbondedMethod=nonbondedMethod,%s' % (' nonbondedCutoff=nonbondedCutoff,' if nonbondedMethod != 'NoCutoff' else ''))
-        script.append('    constraints=constraints, rigidWater=rigidWater%s)' % (', ewaldErrorTolerance=ewaldErrorTolerance' if nonbondedMethod == 'PME' else ''))
+        script.append('    constraints=constraints, rigidWater=rigidWater%s%s)' % (', ewaldErrorTolerance=ewaldErrorTolerance' if nonbondedMethod == 'PME' else '', hmrOptions))
     elif fileType == 'gromacs':
         script.append('system = top.createSystem(nonbondedMethod=nonbondedMethod,%s' % (' nonbondedCutoff=nonbondedCutoff,' if nonbondedMethod != 'NoCutoff' else ''))
-        script.append('    constraints=constraints, rigidWater=rigidWater%s)' % (', ewaldErrorTolerance=ewaldErrorTolerance' if nonbondedMethod == 'PME' else ''))
+        script.append('    constraints=constraints, rigidWater=rigidWater%s%s)' % (', ewaldErrorTolerance=ewaldErrorTolerance' if nonbondedMethod == 'PME' else '', hmrOptions))
     if ensemble == 'npt':
         script.append('system.addForce(MonteCarloBarostat(pressure, temperature, barostatInterval))')
     if fileType == 'pdb' and forcefield.startswith('amoeba'):

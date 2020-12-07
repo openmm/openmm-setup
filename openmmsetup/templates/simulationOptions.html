@@ -64,6 +64,13 @@
             <label for="constraintTol">Constraint Error Tolerance</label>
             {{ textfield('constraintTol', 'The maximum allowed relative error in constrained distance.') }}
             </div>
+            <div class="form-group">
+            <label><input type="checkbox" name="hmr" id="hmr" oninput="optionChanged()" {{ 'checked' if session['hmr'] else '' }}> Hydrogen Mass Repartitioning</label>
+            </div>
+            <div class="form-group" id="hmrOptions">
+                <label for="hmrMass">Hydrogen Mass (amu)</label>
+                {{ textfield('hmrMass', 'The mass of hydrogen atoms.') }}
+            </div>
             </div>
         
         
@@ -235,6 +242,8 @@ function optionChanged() {
     document.getElementById("ewaldTolRow").hidden = (nonbondedMethod != 'PME');
     constraints = document.getElementById("constraints").value;
     document.getElementById("constraintTolRow").hidden = (constraints == 'none');
+    hmr = document.getElementById("hmr").checked;
+    document.getElementById("hmrOptions").hidden = !hmr;
     ensemble = document.getElementById("ensemble").value;
     document.getElementById("pressureRow").hidden = (ensemble != 'npt');
     document.getElementById("barostatIntervalRow").hidden = (ensemble != 'npt');
