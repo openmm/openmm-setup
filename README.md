@@ -4,24 +4,31 @@ This is an application for configuring and running simulations with [OpenMM](htt
 a graphical interface for selecting input files, cleaning up PDB structures, and setting simulation options.
 It can then either save a script for running the simulation later, or directly run the simulation itself.
 
-## Dependencies
+## Installation
 
-OpenMM Setup is a Python application.  It requires the following software to be installed:
+If you are using [Anaconda Python](https://www.continuum.io/downloads) or [Miniconda](http://conda.pydata.org/miniconda.html),
+you can install OpenMM Setup and all its dependencies with the command:
+
+    conda install -c conda-forge openmm-setup
+
+## Installing From Source
+
+Alternatively you can install from source code.  OpenMM Setup is a Python application.  It requires the
+following software to be installed:
 
 * [OpenMM](http://openmm.org)
 * [PDBFixer](https://github.com/pandegroup/pdbfixer)
 * [Flask](http://flask.pocoo.org)
 
-If you are using [Anaconda Python](https://www.continuum.io/downloads) or [Miniconda](http://conda.pydata.org/miniconda.html),
-you can install all of these with a single command:
+If you are using conda you can install all of these with a single command:
 
-    conda install -c omnia openmm pdbfixer flask
-
-## Using OpenMM Setup
+    conda install -c conda-forge openmm pdbfixer flask
 
 To install OpenMM Setup, clone this repository, then type
 
     python setup.py install
+
+## Using OpenMM Setup
 
 You can then execute it by typing
 
