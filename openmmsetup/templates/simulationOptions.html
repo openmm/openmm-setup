@@ -193,6 +193,15 @@
                 {{ textfield('checkpointInterval', 'The interval at which to write checkpoints, measured in time steps.') }}
                 </div>
             </div>
+            <div class="form-group">
+            <label><input type="checkbox" name="writeSystemXml" id="writeSystemXml" oninput="optionChanged()" {{ 'checked' if session['writeSystemXml'] else '' }}> Save system to XML file</label>
+            </div>
+            <div id="systemXmlFileOptions">
+                <div class="form-group">
+                <label for="systemXmlFilename">System XML Output Filename</label>
+                {{ textfield('systemXmlFilename', 'The filename for the output XML file.') }}
+                </div>
+            </div>
             </div>
         </div>
     </div>
@@ -255,6 +264,9 @@ function optionChanged() {
     document.getElementById("logFileOptions").hidden = !writeData;
     writeCheckpoint = document.getElementById("writeCheckpoint").checked;
     document.getElementById("checkpointFileOptions").hidden = !writeCheckpoint;
+    writeSystemXml = document.getElementById("writeSystemXml").checked;
+    document.getElementById("systemXmlFileOptions").hidden = !writeSystemXml;
+
     
     // Submit the form.
     

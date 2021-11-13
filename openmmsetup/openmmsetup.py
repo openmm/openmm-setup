@@ -306,6 +306,7 @@ def setSimulationOptions():
     session['writeCheckpoint'] = 'writeCheckpoint' in request.form
     session['dataFields'] = request.form.getlist('dataFields')
     session['hmr'] = 'hmr' in request.form
+    session['writeSystemXml'] = 'writeSystemXml' in request.form
     return createScript()
 
 @app.route('/downloadScript')
@@ -444,6 +445,8 @@ def configureDefaultOptions():
     session['writeCheckpoint'] = True
     session['checkpointFilename'] = 'checkpoint.chk'
     session['checkpointInterval'] = '10000'
+    session['writeSystemXml'] = False
+    session['systemXmlFilename'] = 'system.xml'
     if isAmoeba:
         session['constraints'] = 'none'
     else:
@@ -647,6 +650,19 @@ os.chdir(outputDir)""")
         script.append('simulation.reporters.append(checkpointReporter)')
     script.append('simulation.currentStep = 0')
     script.append('simulation.step(steps)')
+
+    # Output XML files
+    if session['writeSystemXml']:
+        script.append("\n# Write XML serialized objects\n")
+
+    def _xml_script_segment(to_serialize, target_file):
+        return [
+            'with open("{target_file}", mode="w") as f:'.format(target_file=target_file),
+            '    f.write(XmlSerializer.serialize({to_serialize}))'.format(to_serialize=to_serialize)
+        ]
+
+    if session['writeSystemXml']:
+        script.extend(_xml_script_segment('system', session['systemXmlFilename']))
 
     return "\n".join(script)
 
