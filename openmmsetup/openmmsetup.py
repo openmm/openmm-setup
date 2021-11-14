@@ -307,6 +307,7 @@ def setSimulationOptions():
     session['dataFields'] = request.form.getlist('dataFields')
     session['hmr'] = 'hmr' in request.form
     session['writeSystemXml'] = 'writeSystemXml' in request.form
+    session['writeIntegratorXml'] = 'writeIntegratorXml' in request.form
     return createScript()
 
 @app.route('/downloadScript')
@@ -447,6 +448,8 @@ def configureDefaultOptions():
     session['checkpointInterval'] = '10000'
     session['writeSystemXml'] = False
     session['systemXmlFilename'] = 'system.xml'
+    session['writeIntegratorXml'] = False
+    session['integratorXmlFilename'] = 'integrator.xml'
     if isAmoeba:
         session['constraints'] = 'none'
     else:
@@ -652,7 +655,7 @@ os.chdir(outputDir)""")
     script.append('simulation.step(steps)')
 
     # Output XML files
-    if session['writeSystemXml']:
+    if session['writeSystemXml'] or session['writeIntegratorXml']:
         script.append("\n# Write XML serialized objects\n")
 
     def _xml_script_segment(to_serialize, target_file):
@@ -663,6 +666,8 @@ os.chdir(outputDir)""")
 
     if session['writeSystemXml']:
         script.extend(_xml_script_segment('system', session['systemXmlFilename']))
+    if session['writeIntegratorXml']:
+        script.extend(_xml_script_segment('integrator', session['integratorXmlFilename']))
 
     return "\n".join(script)
 
