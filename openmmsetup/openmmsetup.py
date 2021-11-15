@@ -453,7 +453,7 @@ def configureDefaultOptions():
     session['integratorXmlFilename'] = 'integrator.xml'
     finalOutputExt = {'checkpoint': 'chk',
                       'stateXML': 'xml',
-                      'pdbx': 'pdbx'}[session['finalStateOptionType']]
+                      'pdbx': 'pdbx'}[session['finalStateFileType']]
     session['finalStateFilename'] = "final_state." + finalOutputExt
     if isAmoeba:
         session['constraints'] = 'none'
@@ -665,14 +665,27 @@ os.chdir(outputDir)""")
 
     def _xml_script_segment(to_serialize, target_file):
         return [
-            'with open("{target_file}", mode="w") as f:'.format(target_file=target_file),
-            '    f.write(XmlSerializer.serialize({to_serialize}))'.format(to_serialize=to_serialize)
+            'with open("{target_file}", mode="w") as file:'.format(target_file=target_file),
+            '    file.write(XmlSerializer.serialize({to_serialize}))'.format(to_serialize=to_serialize)
         ]
 
     if session['writeSystemXml']:
         script.extend(_xml_script_segment('system', session['systemXmlFilename']))
     if session['writeIntegratorXml']:
         script.extend(_xml_script_segment('integrator', session['integratorXmlFilename']))
+
+    # Output final simulation state
+    if session['writeFinalState']:
+        script.append("\n# Write file with final simulation state\n")
+        state_script = {
+            'checkpoint': ['simulation.saveCheckpoint("{filename}")'],
+            'stateXML': ['simulation.saveState("{filename}")'],
+            'pdbx': ['state = simulation.context.getState(getPositions=True)',
+                     'with open("{filename}", mode="w") as file:',
+                     '    PDBxFile.writeFile(simulation.topology, state.getPositions(), file)'],
+        }[session['finalStateFileType']]
+        lines = [line.format(filename=session['finalStateFilename']) for line in state_script]
+        script.extend(lines)
 
     return "\n".join(script)
 
