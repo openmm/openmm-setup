@@ -194,18 +194,13 @@
                 </div>
             </div>
             <div class="form-group">
-            <label><input type="checkbox" name="writeSystemXml" id="writeSystemXml" oninput="optionChanged()" {{ 'checked' if session['writeSystemXml'] else '' }}> Save system to XML file</label>
+            <label><input type="checkbox" name="writeSimulationXml" id="writeSimulationXml" oninput="optionChanged()" {{ 'checked' if session['writeSimulationXml'] else '' }}> Save simulation setup as XML files</label>
             </div>
-            <div id="systemXmlFileOptions">
+            <div id="xmlFileOptions">
                 <div class="form-group">
                 <label for="systemXmlFilename">System XML Output Filename</label>
                 {{ textfield('systemXmlFilename', 'The filename for the output XML file.') }}
                 </div>
-            </div>
-            <div class="form-group">
-            <label><input type="checkbox" name="writeIntegratorXml" id="writeIntegratorXml" oninput="optionChanged()" {{ 'checked' if session['writeIntegratorXml'] else '' }}> Save integrator to XML file</label>
-            </div>
-            <div id="integratorXmlFileOptions">
                 <div class="form-group">
                 <label for="integratorXmlFilename">Integrator XML Output Filename</label>
                 {{ textfield('integratorXmlFilename', 'The filename for the output XML file.') }}
@@ -281,6 +276,7 @@ function outputFiletypeChanged() {
     }[document.getElementById("finalStateFileType").value];
     var asSplit = fileLabel.value.split(".");
     if (asSplit.length > 1) asSplit.pop();
+    if (asSplit[0] == "") asSplit[0] = "final_state";  // set default if empty
     asSplit.push(newExt);
     fileLabel.value = asSplit.join(".");
 
@@ -308,10 +304,8 @@ function optionChanged() {
     document.getElementById("logFileOptions").hidden = !writeData;
     writeCheckpoint = document.getElementById("writeCheckpoint").checked;
     document.getElementById("checkpointFileOptions").hidden = !writeCheckpoint;
-    writeSystemXml = document.getElementById("writeSystemXml").checked;
-    document.getElementById("systemXmlFileOptions").hidden = !writeSystemXml;
-    writeIntegratorXml = document.getElementById("writeIntegratorXml").checked;
-    document.getElementById("integratorXmlFileOptions").hidden = !writeIntegratorXml;
+    writeSimulationXml = document.getElementById("writeSimulationXml").checked;
+    document.getElementById("xmlFileOptions").hidden = !writeSimulationXml;
     writeFinalState = document.getElementById("writeFinalState").checked;
     document.getElementById("writeFinalStateOptions").hidden = !writeFinalState;
     

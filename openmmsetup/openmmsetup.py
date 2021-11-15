@@ -447,10 +447,10 @@ def configureDefaultOptions():
     session['writeCheckpoint'] = True
     session['checkpointFilename'] = 'checkpoint.chk'
     session['checkpointInterval'] = '10000'
-    session['writeSystemXml'] = False
+    session['writeSimulationXml'] = False
     session['systemXmlFilename'] = 'system.xml'
-    session['writeIntegratorXml'] = False
     session['integratorXmlFilename'] = 'integrator.xml'
+    session['writeFinalState'] = False
     finalOutputExt = {'checkpoint': 'chk',
                       'stateXML': 'xml',
                       'pdbx': 'pdbx'}[session['finalStateFileType']]
@@ -659,23 +659,24 @@ os.chdir(outputDir)""")
     script.append('simulation.currentStep = 0')
     script.append('simulation.step(steps)')
 
-    # Output XML files
-    if session['writeSystemXml'] or session['writeIntegratorXml']:
+    # Output XML files for system and integrator
+    if session['writeSimulationXml']:
+        def _xml_script_segment(to_serialize, target_file):
+            if target_file == "":
+                # if filename is blank, we cannot create the file
+                return []
+            return [
+                'with open("{target_file}", mode="w") as file:'.format(target_file=target_file),
+                '    file.write(XmlSerializer.serialize({to_serialize}))'.format(to_serialize=to_serialize)
+            ]
+
         script.append("\n# Write XML serialized objects\n")
-
-    def _xml_script_segment(to_serialize, target_file):
-        return [
-            'with open("{target_file}", mode="w") as file:'.format(target_file=target_file),
-            '    file.write(XmlSerializer.serialize({to_serialize}))'.format(to_serialize=to_serialize)
-        ]
-
-    if session['writeSystemXml']:
         script.extend(_xml_script_segment('system', session['systemXmlFilename']))
-    if session['writeIntegratorXml']:
         script.extend(_xml_script_segment('integrator', session['integratorXmlFilename']))
 
+
     # Output final simulation state
-    if session['writeFinalState']:
+    if session['writeFinalState'] and session['finalStateFilename']:
         script.append("\n# Write file with final simulation state\n")
         state_script = {
             'checkpoint': ['simulation.saveCheckpoint("{filename}")'],
