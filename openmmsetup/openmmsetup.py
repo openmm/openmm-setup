@@ -308,6 +308,7 @@ def setSimulationOptions():
     session['hmr'] = 'hmr' in request.form
     session['writeSystemXml'] = 'writeSystemXml' in request.form
     session['writeIntegratorXml'] = 'writeIntegratorXml' in request.form
+    session['writeFinalState'] = 'writeFinalState' in request.form
     return createScript()
 
 @app.route('/downloadScript')
@@ -450,6 +451,10 @@ def configureDefaultOptions():
     session['systemXmlFilename'] = 'system.xml'
     session['writeIntegratorXml'] = False
     session['integratorXmlFilename'] = 'integrator.xml'
+    finalOutputExt = {'checkpoint': 'chk',
+                      'stateXML': 'xml',
+                      'pdbx': 'pdbx'}[session['finalStateOptionType']]
+    session['finalStateFilename'] = "final_state." + finalOutputExt
     if isAmoeba:
         session['constraints'] = 'none'
     else:

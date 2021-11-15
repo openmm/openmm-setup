@@ -1,8 +1,8 @@
 {% extends "layout.html" %}
 {% block title %}Simulation Options{% endblock %}
 
-{% macro choice(id, title, options) %}
-    <select name="{{ id }}" id="{{ id }}" title="{{ title }}" class="form-control" onchange="optionChanged()">
+{% macro choice(id, title, options, changefunc="optionChanged") %}
+    <select name="{{ id }}" id="{{ id }}" title="{{ title }}" class="form-control" onchange="{{ changefunc }}()">
         {% for option in options %}
             <option value="{{ option[0] }}" title="{{ option[2] }}" {{ 'selected' if session[id] == option[0] else '' }}>{{ option[1] }}</option>
         {% endfor %}
@@ -211,6 +211,23 @@
                 {{ textfield('integratorXmlFilename', 'The filename for the output XML file.') }}
                 </div>
             </div>
+            <div class="form-group">
+            <label><input type="checkbox" name="writeFinalState" id="writeFinalState" oninput="optionChanged()" {{ 'checked' if session['writeFinalState'] else '' }}> Save final simulation state</label>
+            </div>
+            <div id="writeFinalStateOptions">
+                <div class="form-group">
+                <label for="finalStateFileType">Output File Type</label>
+                {{ choice('finalStateFileType', 'Select the file type for the final state output.', [
+                    ('checkpoint', 'OpenMM Checkpoint', 'Write an OpenMM checkpoint file. This allows an exact continuation of the simulation.'),
+                    ('stateXML', 'OpenMM State XML', 'Write an OpenMM state XML file. This includes velocities, but not internal information like state of the pseudorandom number generator.' ),
+                    ('pdbx', 'PDBx/mmCIF (no velocities)', 'Write a PBDx file, which can be loaded by many programs. No velocity information will be stored.')
+                ], 'outputFiletypeChanged') }}
+                </div>
+                <div class="form-group">
+                <label for="finalStateFilename">Output Filename</label>
+                {{ textfield('finalStateFilename', 'Filename for simulation final state output.') }}
+                </div>
+            </div>
 
             </div>
         </div>
@@ -253,6 +270,23 @@
 </form>
 
 <script>
+function outputFiletypeChanged() {
+    // Used when <select> for finalStateFileType changes. This changes the
+    // extension of the file depending on the selected output filetype.
+    var fileLabel = document.getElementById("finalStateFilename");
+    var newExt = {
+        'checkpoint': 'chk',
+        'stateXML': 'xml',
+        'pdbx': 'pdbx',
+    }[document.getElementById("finalStateFileType").value];
+    var asSplit = fileLabel.value.split(".");
+    if (asSplit.length > 1) asSplit.pop();
+    asSplit.push(newExt);
+    fileLabel.value = asSplit.join(".");
+
+    optionChanged();
+}
+
 function optionChanged() {
     // Update UI elements.
     
@@ -278,7 +312,8 @@ function optionChanged() {
     document.getElementById("systemXmlFileOptions").hidden = !writeSystemXml;
     writeIntegratorXml = document.getElementById("writeIntegratorXml").checked;
     document.getElementById("integratorXmlFileOptions").hidden = !writeIntegratorXml;
-
+    writeFinalState = document.getElementById("writeFinalState").checked;
+    document.getElementById("writeFinalStateOptions").hidden = !writeFinalState;
     
     // Submit the form.
     
