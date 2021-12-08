@@ -306,8 +306,6 @@ def setSimulationOptions():
     session['writeCheckpoint'] = 'writeCheckpoint' in request.form
     session['dataFields'] = request.form.getlist('dataFields')
     session['hmr'] = 'hmr' in request.form
-    session['writeSystemXml'] = 'writeSystemXml' in request.form
-    session['writeIntegratorXml'] = 'writeIntegratorXml' in request.form
     session['writeFinalState'] = 'writeFinalState' in request.form
     return createScript()
 
