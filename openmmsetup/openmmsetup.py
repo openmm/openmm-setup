@@ -306,6 +306,7 @@ def setSimulationOptions():
     session['writeCheckpoint'] = 'writeCheckpoint' in request.form
     session['dataFields'] = request.form.getlist('dataFields')
     session['hmr'] = 'hmr' in request.form
+    session['writeSimulationXml'] = 'writeSimulationXml' in request.form
     session['writeFinalState'] = 'writeFinalState' in request.form
     return createScript()
 
@@ -632,7 +633,23 @@ os.chdir(outputDir)""")
     if fileType == 'amber':
         script.append('if inpcrd.boxVectors is not None:')
         script.append('    simulation.context.setPeriodicBoxVectors(*inpcrd.boxVectors)')
-    
+
+    # Output XML files for system and integrator
+
+    if session['writeSimulationXml']:
+        def _xml_script_segment(to_serialize, target_file):
+            if target_file == "":
+                # if filename is blank, we cannot create the file
+                return []
+            return [
+                'with open("{target_file}", mode="w") as file:'.format(target_file=target_file),
+                '    file.write(XmlSerializer.serialize({to_serialize}))'.format(to_serialize=to_serialize)
+            ]
+
+        script.append("\n# Write XML serialized objects\n")
+        script.extend(_xml_script_segment('system', session['systemXmlFilename']))
+        script.extend(_xml_script_segment('integrator', session['integratorXmlFilename']))
+
     # Minimize and equilibrate
     
     script.append('\n# Minimize and Equilibrate\n')
@@ -656,22 +673,6 @@ os.chdir(outputDir)""")
         script.append('simulation.reporters.append(checkpointReporter)')
     script.append('simulation.currentStep = 0')
     script.append('simulation.step(steps)')
-
-    # Output XML files for system and integrator
-    if session['writeSimulationXml']:
-        def _xml_script_segment(to_serialize, target_file):
-            if target_file == "":
-                # if filename is blank, we cannot create the file
-                return []
-            return [
-                'with open("{target_file}", mode="w") as file:'.format(target_file=target_file),
-                '    file.write(XmlSerializer.serialize({to_serialize}))'.format(to_serialize=to_serialize)
-            ]
-
-        script.append("\n# Write XML serialized objects\n")
-        script.extend(_xml_script_segment('system', session['systemXmlFilename']))
-        script.extend(_xml_script_segment('integrator', session['integratorXmlFilename']))
-
 
     # Output final simulation state
     if session['writeFinalState'] and session['finalStateFilename']:
