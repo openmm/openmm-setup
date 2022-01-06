@@ -642,8 +642,8 @@ os.chdir(outputDir)""")
                 # if filename is blank, we cannot create the file
                 return []
             return [
-                'with open("{target_file}", mode="w") as file:'.format(target_file=target_file),
-                '    file.write(XmlSerializer.serialize({to_serialize}))'.format(to_serialize=to_serialize)
+                f'with open("{target_file}", mode="w") as file:',
+                f'    file.write(XmlSerializer.serialize({to_serialize}))'
             ]
 
         script.append("\n# Write XML serialized objects\n")
@@ -680,7 +680,7 @@ os.chdir(outputDir)""")
         state_script = {
             'checkpoint': ['simulation.saveCheckpoint("{filename}")'],
             'stateXML': ['simulation.saveState("{filename}")'],
-            'pdbx': ['state = simulation.context.getState(getPositions=True)',
+            'pdbx': ['state = simulation.context.getState(getPositions=True, enforcePeriodicBox=system.usesPeriodicBoundaryConditions())',
                      'with open("{filename}", mode="w") as file:',
                      '    PDBxFile.writeFile(simulation.topology, state.getPositions(), file)'],
         }[session['finalStateFileType']]
