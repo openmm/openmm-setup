@@ -675,7 +675,7 @@ os.chdir(outputDir)""")
     script.append('simulation.step(steps)')
 
     # Output final simulation state
-    if session['writeFinalState'] and session['finalStateFilename']:
+    if session['writeFinalState']:
         script.append("\n# Write file with final simulation state\n")
         state_script = {
             'checkpoint': ['simulation.saveCheckpoint("{filename}")'],
