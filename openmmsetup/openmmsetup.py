@@ -306,6 +306,8 @@ def setSimulationOptions():
     session['writeCheckpoint'] = 'writeCheckpoint' in request.form
     session['dataFields'] = request.form.getlist('dataFields')
     session['hmr'] = 'hmr' in request.form
+    session['writeSimulationXml'] = 'writeSimulationXml' in request.form
+    session['writeFinalState'] = 'writeFinalState' in request.form
     return createScript()
 
 @app.route('/downloadScript')
@@ -444,6 +446,14 @@ def configureDefaultOptions():
     session['writeCheckpoint'] = True
     session['checkpointFilename'] = 'checkpoint.chk'
     session['checkpointInterval'] = '10000'
+    session['writeSimulationXml'] = False
+    session['systemXmlFilename'] = 'system.xml'
+    session['integratorXmlFilename'] = 'integrator.xml'
+    session['writeFinalState'] = False
+    finalOutputExt = {'checkpoint': 'chk',
+                      'stateXML': 'xml',
+                      'pdbx': 'pdbx'}[session['finalStateFileType']]
+    session['finalStateFilename'] = "final_state." + finalOutputExt
     if isAmoeba:
         session['constraints'] = 'none'
     else:
@@ -623,7 +633,23 @@ os.chdir(outputDir)""")
     if fileType == 'amber':
         script.append('if inpcrd.boxVectors is not None:')
         script.append('    simulation.context.setPeriodicBoxVectors(*inpcrd.boxVectors)')
-    
+
+    # Output XML files for system and integrator
+
+    if session['writeSimulationXml']:
+        def _xml_script_segment(to_serialize, target_file):
+            if target_file == "":
+                # if filename is blank, we cannot create the file
+                return []
+            return [
+                f'with open("{target_file}", mode="w") as file:',
+                f'    file.write(XmlSerializer.serialize({to_serialize}))'
+            ]
+
+        script.append("\n# Write XML serialized objects\n")
+        script.extend(_xml_script_segment('system', session['systemXmlFilename']))
+        script.extend(_xml_script_segment('integrator', session['integratorXmlFilename']))
+
     # Minimize and equilibrate
     
     script.append('\n# Minimize and Equilibrate\n')
@@ -647,6 +673,19 @@ os.chdir(outputDir)""")
         script.append('simulation.reporters.append(checkpointReporter)')
     script.append('simulation.currentStep = 0')
     script.append('simulation.step(steps)')
+
+    # Output final simulation state
+    if session['writeFinalState']:
+        script.append("\n# Write file with final simulation state\n")
+        state_script = {
+            'checkpoint': ['simulation.saveCheckpoint("{filename}")'],
+            'stateXML': ['simulation.saveState("{filename}")'],
+            'pdbx': ['state = simulation.context.getState(getPositions=True, enforcePeriodicBox=system.usesPeriodicBoundaryConditions())',
+                     'with open("{filename}", mode="w") as file:',
+                     '    PDBxFile.writeFile(simulation.topology, state.getPositions(), file)'],
+        }[session['finalStateFileType']]
+        lines = [line.format(filename=session['finalStateFilename']) for line in state_script]
+        script.extend(lines)
 
     return "\n".join(script)
 

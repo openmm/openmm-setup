@@ -1,8 +1,8 @@
 {% extends "layout.html" %}
 {% block title %}Simulation Options{% endblock %}
 
-{% macro choice(id, title, options) %}
-    <select name="{{ id }}" id="{{ id }}" title="{{ title }}" class="form-control" onchange="optionChanged()">
+{% macro choice(id, title, options, changefunc="optionChanged") %}
+    <select name="{{ id }}" id="{{ id }}" title="{{ title }}" class="form-control" onchange="{{ changefunc }}()">
         {% for option in options %}
             <option value="{{ option[0] }}" title="{{ option[2] }}" {{ 'selected' if session[id] == option[0] else '' }}>{{ option[1] }}</option>
         {% endfor %}
@@ -193,6 +193,36 @@
                 {{ textfield('checkpointInterval', 'The interval at which to write checkpoints, measured in time steps.') }}
                 </div>
             </div>
+            <div class="form-group">
+            <label><input type="checkbox" name="writeSimulationXml" id="writeSimulationXml" oninput="optionChanged()" {{ 'checked' if session['writeSimulationXml'] else '' }}> Save simulation setup as XML files</label>
+            </div>
+            <div id="xmlFileOptions">
+                <div class="form-group">
+                <label for="systemXmlFilename">System XML Output Filename</label>
+                {{ textfield('systemXmlFilename', 'The filename for the output XML file.') }}
+                </div>
+                <div class="form-group">
+                <label for="integratorXmlFilename">Integrator XML Output Filename</label>
+                {{ textfield('integratorXmlFilename', 'The filename for the output XML file.') }}
+                </div>
+            </div>
+            <div class="form-group">
+            <label><input type="checkbox" name="writeFinalState" id="writeFinalState" oninput="optionChanged()" {{ 'checked' if session['writeFinalState'] else '' }}> Save final simulation state</label>
+            </div>
+            <div id="writeFinalStateOptions">
+                <div class="form-group">
+                <label for="finalStateFileType">Output File Type</label>
+                {{ choice('finalStateFileType', 'Select the file type for the final state output.', [
+                    ('stateXML', 'OpenMM State XML', 'Write an OpenMM state XML file. This includes most details about the simulation, but not internal information like state of the pseudorandom number generator.' ),
+                    ('checkpoint', 'OpenMM Checkpoint', 'Write an OpenMM checkpoint file. This allows an exact continuation of the simulation, but is specific to the particular hardware and OpenMM version used to run the simulation.'),
+                    ('pdbx', 'PDBx/mmCIF (no velocities)', 'Write a PDBx/mmCIF file, which can be loaded by many programs. Only positions and topology information will be stored.') ], 'outputFiletypeChanged') }}
+                </div>
+                <div class="form-group">
+                <label for="finalStateFilename">Output Filename</label>
+                {{ textfield('finalStateFilename', 'Filename for simulation final state output.') }}
+                </div>
+            </div>
+
             </div>
         </div>
     </div>
@@ -234,6 +264,24 @@
 </form>
 
 <script>
+function outputFiletypeChanged() {
+    // Used when <select> for finalStateFileType changes. This changes the
+    // extension of the file depending on the selected output filetype.
+    var fileLabel = document.getElementById("finalStateFilename");
+    var newExt = {
+        'checkpoint': 'chk',
+        'stateXML': 'xml',
+        'pdbx': 'pdbx',
+    }[document.getElementById("finalStateFileType").value];
+    var asSplit = fileLabel.value.split(".");
+    if (asSplit.length > 1) asSplit.pop();
+    if (asSplit[0] == "") asSplit[0] = "final_state";  // set default if empty
+    asSplit.push(newExt);
+    fileLabel.value = asSplit.join(".");
+
+    optionChanged();
+}
+
 function optionChanged() {
     // Update UI elements.
     
@@ -255,6 +303,10 @@ function optionChanged() {
     document.getElementById("logFileOptions").hidden = !writeData;
     writeCheckpoint = document.getElementById("writeCheckpoint").checked;
     document.getElementById("checkpointFileOptions").hidden = !writeCheckpoint;
+    writeSimulationXml = document.getElementById("writeSimulationXml").checked;
+    document.getElementById("xmlFileOptions").hidden = !writeSimulationXml;
+    writeFinalState = document.getElementById("writeFinalState").checked;
+    document.getElementById("writeFinalStateOptions").hidden = !writeFinalState;
     
     // Submit the form.
     
