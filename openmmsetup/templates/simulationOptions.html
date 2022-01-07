@@ -215,7 +215,7 @@
                 {{ choice('finalStateFileType', 'Select the file type for the final state output.', [
                     ('stateXML', 'OpenMM State XML', 'Write an OpenMM state XML file. This includes most details about the simulation, but not internal information like state of the pseudorandom number generator.' ),
                     ('checkpoint', 'OpenMM Checkpoint', 'Write an OpenMM checkpoint file. This allows an exact continuation of the simulation, but is specific to the particular hardware and OpenMM version used to run the simulation.'),
-                    ('pdbx', 'PDBx/mmCIF (no velocities)', 'Write a PBDx/mmCIF file, which can be loaded by many programs. Only positions and topology information will be stored.') ], 'outputFiletypeChanged') }}
+                    ('pdbx', 'PDBx/mmCIF (no velocities)', 'Write a PDBx/mmCIF file, which can be loaded by many programs. Only positions and topology information will be stored.') ], 'outputFiletypeChanged') }}
                 </div>
                 <div class="form-group">
                 <label for="finalStateFilename">Output Filename</label>
