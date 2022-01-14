@@ -26,7 +26,7 @@ Select the input file and options for how to model it.
         <option value="amber99sbildn.xml">AMBER99SB-ILDN</option>
         <option value="amber03.xml">AMBER03</option>
         <option value="amber10.xml">AMBER10</option>
-        <option value="amoeba2013.xml">AMOEBA 2013</option>
+        <option value="amoeba2018.xml">AMOEBA 2018</option>
         <option value="charmm36.xml">CHARMM36</option>
         <option value="charmm_polar_2019.xml">CHARMM Polar 2019</option>
     </select></div>
@@ -48,7 +48,10 @@ var amber14WaterModels = [
         ["amber14/tip3pfb.xml", "TIP3P-FB", true],
         ["amber14/spce.xml", "SPC/E", false],
         ["amber14/tip4pew.xml", "TIP4P-Ew", false],
-        ["amber14/tip4pfb.xml", "TIP4P-FB", false]
+        ["amber14/tip4pfb.xml", "TIP4P-FB", false],
+        ["implicit/obc2.xml", "OBC (implicit solvent)", false],
+        ["implicit/GBn.xml", "GBn (implicit solvent)", false],
+        ["implicit/GBn2.xml", "GBn2 (implicit solvent)", false]
 ]
 
 var charmm36WaterModels = [
@@ -59,7 +62,10 @@ var charmm36WaterModels = [
         ["charmm36/tip4pew.xml", "TIP4P-Ew", false],
         ["charmm36/tip4p2005.xml", "TIP4P-2005", false],
         ["charmm36/tip5p.xml", "TIP5P", false],
-        ["charmm36/tip5pew.xml", "TIP5P-Ew", false]
+        ["charmm36/tip5pew.xml", "TIP5P-Ew", false],
+        ["implicit/obc2.xml", "OBC (implicit solvent)", false],
+        ["implicit/GBn.xml", "GBn (implicit solvent)", false],
+        ["implicit/GBn2.xml", "GBn2 (implicit solvent)", false]
 ]
 
 var oldAmberWaterModels = [
@@ -91,7 +97,7 @@ function optionChanged() {
             models = amber14WaterModels;
         else if (forcefield == "charmm36.xml")
             models = charmm36WaterModels;
-        else if (forcefield == "amoeba2013.xml")
+        else if (forcefield == "amoeba2018.xml")
             models = amoebaWaterModels;
         else
             models = oldAmberWaterModels;

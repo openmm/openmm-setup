@@ -450,10 +450,8 @@ def configureDefaultOptions():
     session['systemXmlFilename'] = 'system.xml'
     session['integratorXmlFilename'] = 'integrator.xml'
     session['writeFinalState'] = False
-    finalOutputExt = {'checkpoint': 'chk',
-                      'stateXML': 'xml',
-                      'pdbx': 'pdbx'}[session['finalStateFileType']]
-    session['finalStateFilename'] = "final_state." + finalOutputExt
+    session['finalStateFileType'] = 'stateXML'
+    session['finalStateFilename'] = "final_state.xml"
     if isAmoeba:
         session['constraints'] = 'none'
     else:
@@ -498,8 +496,8 @@ os.chdir(outputDir)""")
             script.append("pdbx = PDBxFile('%s')" % uploadedFiles['file'][0][1])
         forcefield = session['forcefield']
         water = session['waterModel']
-        if forcefield == 'amoeba2013.xml':
-            water = ('amoeba2013_gk.xml' if water == 'implicit' else None)
+        if forcefield == 'amoeba2018.xml':
+            water = ('amoeba2018_gk.xml' if water == 'implicit' else None)
         elif forcefield == 'charmm_polar_2019.xml':
             water = None
         elif water == 'implicit':
