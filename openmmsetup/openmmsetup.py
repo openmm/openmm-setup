@@ -5,7 +5,6 @@ from pdbfixer.pdbfixer import PDBFixer, proteinResidues, dnaResidues, rnaResidue
 from flask import Flask, request, session, g, render_template, make_response, send_file, url_for
 from werkzeug.utils import secure_filename
 from multiprocessing import Process, Pipe
-from math import sqrt
 import datetime
 import os
 import shutil
@@ -241,25 +240,16 @@ def addHydrogens():
         pH = float(request.form.get('ph', '7'))
         fixer.addMissingHydrogens(pH)
     if 'addWater' in request.form:
-        padding, boxSize, boxVectors = None, None, None
+        padding, boxSize, boxShape = None, None, None
         if request.form['boxType'] == 'geometry':
-            geompadding = float(request.form['geomPadding']) * unit.nanometer
-            geometry = request.form['geometryDropdown']
-            maxSize = max(max((pos[i] for pos in fixer.positions))-min((pos[i] for pos in fixer.positions)) for i in range(3))
-            if geometry == 'cube':
-                padding = geompadding
-            elif geometry == 'truncatedOctahedron':
-                vectors = mm.Vec3(1,0,0), mm.Vec3(1/3,2*sqrt(2)/3,0), mm.Vec3(-1/3,sqrt(2)/3,sqrt(6)/3)
-                boxVectors = [(maxSize+geompadding)*v for v in vectors]
-            elif geometry == 'rhombicDodecahedron':
-                vectors = mm.Vec3(1,0,0), mm.Vec3(0,1,0), mm.Vec3(0.5,0.5,sqrt(2)/2)
-                boxVectors = [(maxSize+geompadding)*v for v in vectors]
+            padding = float(request.form['geomPadding']) * unit.nanometer
+            boxShape = request.form['geometryDropdown']
         else:
             boxSize = (float(request.form['boxx']), float(request.form['boxy']), float(request.form['boxz']))*unit.nanometer
         ionicStrength = float(request.form['ionicstrength'])*unit.molar
         positiveIon = request.form['positiveion']+'+'
         negativeIon = request.form['negativeion']+'-'
-        fixer.addSolvent(boxSize, padding, boxVectors, positiveIon, negativeIon, ionicStrength)
+        fixer.addSolvent(boxSize=boxSize, padding=padding, boxShape=boxShape, positiveIon=positiveIon, negativeIon=negativeIon, ionicStrength=ionicStrength)
     elif 'addMembrane' in request.form:
         lipidType = request.form['lipidType']
         padding = float(request.form['membranePadding'])*unit.nanometer
