@@ -324,7 +324,7 @@ def downloadPackage():
                 file.seek(0, 0)
                 zip.writestr('openmm_simulation/%s' % name, file.read())
     temp.seek(0, 0)
-    return send_file(temp, 'application/zip', True, 'openmm_simulation.zip', cache_timeout=0)
+    return send_file(temp, 'application/zip', True, 'openmm_simulation.zip', max_age=0)
 
 @app.route('/showRunSimulation')
 def showRunSimulation():
