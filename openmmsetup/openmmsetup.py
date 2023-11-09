@@ -6,6 +6,7 @@ from flask import Flask, request, session, g, render_template, make_response, se
 from werkzeug.utils import secure_filename
 from multiprocessing import Process, Pipe
 import datetime
+from io import StringIO
 import os
 import shutil
 import signal
@@ -16,12 +17,6 @@ import time
 import traceback
 import webbrowser
 import zipfile
-
-if sys.version_info >= (3,0):
-    from io import StringIO
-else:
-    from cStringIO import StringIO
-
 
 app = Flask(__name__)
 app.config.from_object(__name__)
@@ -501,8 +496,8 @@ os.chdir(outputDir)""")
         else:
             script.append("forcefield = ForceField('%s', '%s')" % (forcefield, water))
     elif fileType == 'amber':
-        script.append("prmtop = AmberPrmtopFile('%s')" % uploadedFiles['prmtopFile'][0][1])
         script.append("inpcrd = AmberInpcrdFile('%s')" % uploadedFiles['inpcrdFile'][0][1])
+        script.append("prmtop = AmberPrmtopFile('%s', periodicBoxVectors=inpcrd.boxVectors)" % uploadedFiles['prmtopFile'][0][1])
     elif fileType == 'charmm':
         script.append("psf = CharmmPsfFile('%s')" % uploadedFiles['psfFile'][0][1])
         script.append("crd = CharmmCrdFile('%s')" % uploadedFiles['crdFile'][0][1])
@@ -618,9 +613,6 @@ os.chdir(outputDir)""")
         script.append('integrator.setConstraintTolerance(constraintTolerance)')
     script.append('simulation = Simulation(topology, system, integrator, platform%s)' % (', platformProperties' if session['platform'] in ('CUDA', 'OpenCL') else ''))
     script.append('simulation.context.setPositions(positions)')
-    if fileType == 'amber':
-        script.append('if inpcrd.boxVectors is not None:')
-        script.append('    simulation.context.setPeriodicBoxVectors(*inpcrd.boxVectors)')
 
     # Output XML files for system and integrator
 
