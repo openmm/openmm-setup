@@ -136,16 +136,22 @@
             <div id="output" class="tab-pane fade">
             <p/>
             <div class="form-group">
-            <label><input type="checkbox" name="writeDCD" id="writeDCD" oninput="optionChanged()" {{ 'checked' if session['writeDCD'] else '' }}> Save trajectory to a DCD file</label>
+            <label><input type="checkbox" name="writeTrajectory" id="writeTrajectory" oninput="optionChanged()" {{ 'checked' if session['writeTrajectory'] else '' }}> Save trajectory to a file</label>
             </div>
-            <div id="dcdFileOptions">
+            <div id="trajFileOptions">
                 <div class="form-group">
-                <label for="dcdFilename">DCD Filename</label>
-                {{ textfield('dcdFilename', 'The filename for the trajectory file.') }}
+                <label for="trajFormat">Trajectory Format</label>
+                {{ choice('trajFormat', 'Select format in which to save the trajectory.', [
+                    ('dcd', 'DCD', 'This format stores coordinates most precisely.'),
+                    ('xtc', 'XTC', 'This format stores coordinates with reduced precision, leading to smaller files.')], 'trajectoryFormatChanged') }}
                 </div>
                 <div class="form-group">
-                <label for="dcdInterval">DCD Output Interval (steps)</label>
-                {{ textfield('dcdInterval', 'The interval at which to write frames to the trajectory, measured in time steps.') }}
+                <label for="trajFilename">Trajectory Filename</label>
+                {{ textfield('trajFilename', 'The filename for the trajectory file.') }}
+                </div>
+                <div class="form-group">
+                <label for="trajInterval">Trajectory Output Interval (steps)</label>
+                {{ textfield('trajInterval', 'The interval at which to write frames to the trajectory, measured in time steps.') }}
                 </div>
             </div>
             <div class="form-group">
@@ -264,6 +270,19 @@
 </form>
 
 <script>
+function trajectoryFormatChanged() {
+    // Used when <select> for trajFormat changes. This changes the
+    // extension of the file depending on the selected format.
+    var fileLabel = document.getElementById("trajFilename");
+    var asSplit = fileLabel.value.split(".");
+    if (asSplit.length > 1) asSplit.pop();
+    if (asSplit[0] == "") asSplit[0] = "trajectory";  // set default if empty
+    asSplit.push(document.getElementById("trajFormat").value);
+    fileLabel.value = asSplit.join(".");
+
+    optionChanged();
+}
+
 function outputFiletypeChanged() {
     // Used when <select> for finalStateFileType changes. This changes the
     // extension of the file depending on the selected output filetype.
@@ -297,8 +316,8 @@ function optionChanged() {
     document.getElementById("barostatIntervalRow").hidden = (ensemble != 'npt');
     platform = document.getElementById("platform").value;
     document.getElementById("precisionRow").hidden = (platform != 'CUDA' && platform != 'OpenCL');
-    writeDCD = document.getElementById("writeDCD").checked;
-    document.getElementById("dcdFileOptions").hidden = !writeDCD;
+    writeTrajectory = document.getElementById("writeTrajectory").checked;
+    document.getElementById("trajFileOptions").hidden = !writeTrajectory;
     writeData = document.getElementById("writeData").checked;
     document.getElementById("logFileOptions").hidden = !writeData;
     writeCheckpoint = document.getElementById("writeCheckpoint").checked;
