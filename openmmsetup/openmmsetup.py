@@ -286,7 +286,7 @@ def showSimulationOptions():
 def setSimulationOptions():
     for key in request.form:
         session[key] = request.form[key]
-    session['writeDCD'] = 'writeDCD' in request.form
+    session['writeTrajectory'] = 'writeTrajectory' in request.form
     session['writeData'] = 'writeData' in request.form
     session['writeCheckpoint'] = 'writeCheckpoint' in request.form
     session['dataFields'] = request.form.getlist('dataFields')
@@ -421,9 +421,10 @@ def configureDefaultOptions():
     session['pressure'] = '1.0'
     session['barostatInterval'] = '25'
     session['nonbondedMethod'] = 'CutoffNonPeriodic' if implicitWater else 'PME'
-    session['writeDCD'] = True
-    session['dcdFilename'] = 'trajectory.dcd'
-    session['dcdInterval'] = '10000'
+    session['writeTrajectory'] = True
+    session['trajFormat'] = 'dcd'
+    session['trajFilename'] = 'trajectory.dcd'
+    session['trajInterval'] = '10000'
     session['writeData'] = True
     session['dataFilename'] = 'log.txt'
     session['dataInterval'] = '1000'
@@ -548,8 +549,11 @@ os.chdir(outputDir)""")
     script.append("platform = Platform.getPlatformByName('%s')" % session['platform'])
     if session['platform'] in ('CUDA', 'OpenCL'):
         script.append("platformProperties = {'Precision': '%s'}" % session['precision'])
-    if session['writeDCD']:
-        script.append("dcdReporter = DCDReporter('%s', %s)" % (session['dcdFilename'], session['dcdInterval']))
+    if session['writeTrajectory']:
+        if session['trajFormat'] == 'dcd':
+            script.append("dcdReporter = DCDReporter('%s', %s)" % (session['trajFilename'], session['trajInterval']))
+        else:
+            script.append("xtcReporter = XTCReporter('%s', %s)" % (session['trajFilename'], session['trajInterval']))
     if session['writeData']:
         args = ', '.join('%s=True' % field for field in session['dataFields'])
         script.append("dataReporter = StateDataReporter('%s', %s, totalSteps=steps," % (session['dataFilename'], session['dataInterval']))
@@ -643,8 +647,11 @@ os.chdir(outputDir)""")
     
     script.append('\n# Simulate\n')
     script.append("print('Simulating...')")
-    if session['writeDCD']:
-        script.append('simulation.reporters.append(dcdReporter)')
+    if session['writeTrajectory']:
+        if session['trajFormat'] == 'dcd':
+            script.append('simulation.reporters.append(dcdReporter)')
+        else:
+            script.append('simulation.reporters.append(xtcReporter)')
     if session['writeData']:
         script.append('simulation.reporters.append(dataReporter)')
         if isInternal:
