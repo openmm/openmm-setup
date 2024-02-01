@@ -583,7 +583,7 @@ os.chdir(outputDir)""")
     elif fileType == 'gromacs':
         script.append('topology = top.topology')
         script.append('positions = gro.positions')
-    if fileType == 'pdb' and (forcefield == 'charmm_polar_2019.xml' or water in ('tip4pew.xml', 'tip4pfb.xml', 'tip5p.xml')):
+    if fileType == 'pdb' and (forcefield == 'charmm_polar_2019.xml' or 'tip4p' in water or 'tip5p' in water):
         script.append('modeller = Modeller(topology, positions)')
         script.append('modeller.addExtraParticles(forcefield)')
         script.append('topology = modeller.topology')
