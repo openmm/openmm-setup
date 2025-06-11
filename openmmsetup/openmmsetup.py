@@ -484,7 +484,7 @@ os.chdir(outputDir)""")
         water = session['waterModel']
         if forcefield == 'amoeba2018.xml':
             water = ('amoeba2018_gk.xml' if water == 'implicit' else None)
-        elif forcefield == 'charmm_polar_2019.xml':
+        elif forcefield == 'charmm_polar_2019.xml' or forcefield == 'charmm_polar_2023.xml':
             water = None
         elif water == 'implicit':
             models = {'amber99sb.xml': 'amber99_obc.xml',
@@ -583,7 +583,7 @@ os.chdir(outputDir)""")
     elif fileType == 'gromacs':
         script.append('topology = top.topology')
         script.append('positions = gro.positions')
-    if fileType == 'pdb' and (forcefield == 'charmm_polar_2019.xml' or 'tip4p' in water or 'tip5p' in water):
+    if fileType == 'pdb' and (forcefield == 'charmm_polar_2019.xml' or forcefield == 'charmm_polar_2023.xml' or 'tip4p' in water or 'tip5p' in water):
         script.append('modeller = Modeller(topology, positions)')
         script.append('modeller.addExtraParticles(forcefield)')
         script.append('topology = modeller.topology')
