@@ -4,6 +4,7 @@ from openmm.app import PDBFile, PDBxFile
 from pdbfixer.pdbfixer import PDBFixer, proteinResidues, dnaResidues, rnaResidues, _guessFileFormat
 from flask import Flask, request, session, g, render_template, make_response, send_file, url_for
 from werkzeug.utils import secure_filename
+from werkzeug.serving import make_server
 from multiprocessing import Process, Pipe
 import datetime
 from io import StringIO
@@ -43,10 +44,7 @@ def headerControls():
     if 'startOver' in request.args:
         return showSelectFileType()
     if 'quit' in request.args:
-        func = request.environ.get('werkzeug.server.shutdown')
-        if func is None:
-            raise RuntimeError('Not running with the Werkzeug Server')
-        func()
+        shutdownEvent.set()
         return "OpenMM Setup has stopped running.  You can close this window."
 
 @app.route('/')
@@ -685,8 +683,13 @@ def main():
         url = 'http://127.0.0.1:5000'
         webbrowser.open(url)
 
+    global server, shutdownEvent
+    server = make_server('localhost', 5000, app)
+    shutdownEvent = threading.Event()
     threading.Thread(target=open_browser).start()
-    app.run(debug=False)
+    threading.Thread(target=server.serve_forever).start()
+    shutdownEvent.wait()
+    server.shutdown()
 
 if __name__ == '__main__':
     main()
