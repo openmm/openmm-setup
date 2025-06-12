@@ -23,10 +23,6 @@ Select the input file and options for how to model it.
     <div class="col-md-10"><select name="forcefield" id="forcefield" class="form-control" onchange="optionChanged()">
         <option value="amber19-all.xml" selected>AMBER19</option>
         <option value="amber14-all.xml">AMBER14</option>
-        <option value="amber99sb.xml">AMBER99SB</option>
-        <option value="amber99sbildn.xml">AMBER99SB-ILDN</option>
-        <option value="amber03.xml">AMBER03</option>
-        <option value="amber10.xml">AMBER10</option>
         <option value="amoeba2018.xml">AMOEBA 2018</option>
         <option value="charmm36_2024.xml">CHARMM36 2024</option>
         <option value="charmm36.xml">CHARMM36 2014</option>
@@ -82,16 +78,6 @@ var charmm36WaterModels = [
         ["implicit/GBn2.xml", "GBn2 (implicit solvent)", false]
 ]
 
-var oldAmberWaterModels = [
-        ["tip3p.xml", "TIP3P", false],
-        ["tip3pfb.xml", "TIP3P-FB", true],
-        ["spce.xml", "SPC/E", false],
-        ["tip4pew.xml", "TIP4P-Ew", false],
-        ["tip4pfb.xml", "TIP4P-FB", false],
-        ["tip5p.xml", "TIP5P", false],
-        ["implicit", "OBC (implicit solvent)", false]
-]
-
 var amoebaWaterModels = [
         ["explicit", "Explicit", true],
         ["implicit", "Implicit", false]
@@ -115,8 +101,6 @@ function optionChanged() {
             models = charmm36WaterModels;
         else if (forcefield == "amoeba2018.xml")
             models = amoebaWaterModels;
-        else
-            models = oldAmberWaterModels;
         while (waterSelect.length > 0)
             waterSelect.remove(0)
         for (i = 0; i < models.length; i++) {
