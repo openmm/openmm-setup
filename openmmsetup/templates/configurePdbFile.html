@@ -21,13 +21,12 @@ Select the input file and options for how to model it.
     <div class="form-group">
     <label for="forcefield" class="control-label col-md-2">Force Field</label>
     <div class="col-md-10"><select name="forcefield" id="forcefield" class="form-control" onchange="optionChanged()">
-        <option value="amber14-all.xml" selected>AMBER14</option>
-        <option value="amber99sb.xml">AMBER99SB</option>
-        <option value="amber99sbildn.xml">AMBER99SB-ILDN</option>
-        <option value="amber03.xml">AMBER03</option>
-        <option value="amber10.xml">AMBER10</option>
+        <option value="amber19-all.xml" selected>AMBER19</option>
+        <option value="amber14-all.xml">AMBER14</option>
         <option value="amoeba2018.xml">AMOEBA 2018</option>
-        <option value="charmm36.xml">CHARMM36</option>
+        <option value="charmm36_2024.xml">CHARMM36 2024</option>
+        <option value="charmm36.xml">CHARMM36 2014</option>
+        <option value="charmm_polar_2023.xml">CHARMM Polar 2023</option>
         <option value="charmm_polar_2019.xml">CHARMM Polar 2019</option>
     </select></div>
     </div>
@@ -54,6 +53,17 @@ var amber14WaterModels = [
         ["implicit/GBn2.xml", "GBn2 (implicit solvent)", false]
 ]
 
+var amber19WaterModels = [
+        ["amber19/tip3p.xml", "TIP3P", false],
+        ["amber19/tip3pfb.xml", "TIP3P-FB", true],
+        ["amber19/spce.xml", "SPC/E", false],
+        ["amber19/tip4pew.xml", "TIP4P-Ew", false],
+        ["amber19/tip4pfb.xml", "TIP4P-FB", false],
+        ["implicit/obc2.xml", "OBC (implicit solvent)", false],
+        ["implicit/GBn.xml", "GBn (implicit solvent)", false],
+        ["implicit/GBn2.xml", "GBn2 (implicit solvent)", false]
+]
+
 var charmm36WaterModels = [
         ["charmm36/water.xml", "CHARMM default", true],
         ["charmm36/tip3p-pme-b.xml", "TIP3P-PME-B", false],
@@ -68,16 +78,6 @@ var charmm36WaterModels = [
         ["implicit/GBn2.xml", "GBn2 (implicit solvent)", false]
 ]
 
-var oldAmberWaterModels = [
-        ["tip3p.xml", "TIP3P", false],
-        ["tip3pfb.xml", "TIP3P-FB", true],
-        ["spce.xml", "SPC/E", false],
-        ["tip4pew.xml", "TIP4P-Ew", false],
-        ["tip4pfb.xml", "TIP4P-FB", false],
-        ["tip5p.xml", "TIP5P", false],
-        ["implicit", "OBC (implicit solvent)", false]
-]
-
 var amoebaWaterModels = [
         ["explicit", "Explicit", true],
         ["implicit", "Implicit", false]
@@ -89,18 +89,18 @@ function optionChanged() {
     forcefield = document.getElementById("forcefield").value;
     waterSelect = document.getElementById("waterModel");
     currentWater = waterSelect.value;
-    if (forcefield == 'charmm_polar_2019.xml')
+    if (forcefield == 'charmm_polar_2019.xml' || forcefield == 'charmm_polar_2023.xml')
         document.getElementById("waterModelRow").hidden = true;
     else {
         document.getElementById("waterModelRow").hidden = false;
         if (forcefield == "amber14-all.xml")
             models = amber14WaterModels;
-        else if (forcefield == "charmm36.xml")
+        else if (forcefield == "amber19-all.xml")
+            models = amber19WaterModels;
+        else if (forcefield == "charmm36.xml" || forcefield == "charmm36_2024.xml")
             models = charmm36WaterModels;
         else if (forcefield == "amoeba2018.xml")
             models = amoebaWaterModels;
-        else
-            models = oldAmberWaterModels;
         while (waterSelect.length > 0)
             waterSelect.remove(0)
         for (i = 0; i < models.length; i++) {
