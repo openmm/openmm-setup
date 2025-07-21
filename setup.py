@@ -12,7 +12,7 @@ from setuptools import setup, find_packages
 DOCLINES = __doc__.split("\n")
 
 ########################
-__version__ = '1.6'
+__version__ = '1.6.1'
 VERSION = __version__
 ISRELEASED = False
 ########################
@@ -53,6 +53,6 @@ setup(
     packages=find_packages(),
     package_data={'openmmsetup': find_package_data()},
     zip_safe=False,
-    install_requires=['flask', 'openmm >= 8.3', 'pdbfixer >= 1.5'],
+    install_requires=['flask', 'openmm >= 8.3.1', 'pdbfixer >= 1.5'],
     entry_points={'console_scripts': ['openmm-setup = openmmsetup.openmmsetup:main']})
 

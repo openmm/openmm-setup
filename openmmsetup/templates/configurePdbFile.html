@@ -78,6 +78,20 @@ var charmm36WaterModels = [
         ["implicit/GBn2.xml", "GBn2 (implicit solvent)", false]
 ]
 
+var charmm36_2024WaterModels = [
+        ["charmm36_2024/water.xml", "CHARMM default", true],
+        ["charmm36_2024/tip3p-pme-b.xml", "TIP3P-PME-B", false],
+        ["charmm36_2024/tip3p-pme-f.xml", "TIP3P-PME-F", false],
+        ["charmm36_2024/spce.xml", "SPC/E", false],
+        ["charmm36_2024/tip4pew.xml", "TIP4P-Ew", false],
+        ["charmm36_2024/tip4p2005.xml", "TIP4P-2005", false],
+        ["charmm36_2024/tip5p.xml", "TIP5P", false],
+        ["charmm36_2024/tip5pew.xml", "TIP5P-Ew", false],
+        ["implicit/obc2.xml", "OBC (implicit solvent)", false],
+        ["implicit/GBn.xml", "GBn (implicit solvent)", false],
+        ["implicit/GBn2.xml", "GBn2 (implicit solvent)", false]
+]
+
 var amoebaWaterModels = [
         ["explicit", "Explicit", true],
         ["implicit", "Implicit", false]
@@ -97,8 +111,10 @@ function optionChanged() {
             models = amber14WaterModels;
         else if (forcefield == "amber19-all.xml")
             models = amber19WaterModels;
-        else if (forcefield == "charmm36.xml" || forcefield == "charmm36_2024.xml")
+        else if (forcefield == "charmm36.xml")
             models = charmm36WaterModels;
+        else if (forcefield == "charmm36_2024.xml")
+            models = charmm36_2024WaterModels;
         else if (forcefield == "amoeba2018.xml")
             models = amoebaWaterModels;
         while (waterSelect.length > 0)
