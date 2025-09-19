@@ -92,6 +92,7 @@ def configureFiles():
                 fixer = PDBFixer(pdbfile=file)
             else:
                 fixer = PDBFixer(pdbxfile=StringIO(file.read().decode()))
+            configureDefaultOptions()
             return showSelectChains()
     elif fileType == 'amber':
         if 'prmtopFile' not in request.files or request.files['prmtopFile'].filename == '' or 'inpcrdFile' not in request.files or request.files['inpcrdFile'].filename == '':
