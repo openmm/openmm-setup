@@ -8,6 +8,7 @@ from werkzeug.serving import make_server
 from multiprocessing import Process, Pipe
 import datetime
 from io import StringIO
+import argparse
 import os
 import shutil
 import signal
@@ -677,15 +678,20 @@ os.chdir(outputDir)""")
 
 
 def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-p', '--port', type=int, default=5000)
+    port = parser.parse_args().port
+    if port < 1 or port > 65535:
+        raise ValueError(f"The given {port=} is not between 1 and 65535")
 
     def open_browser():
         # Give the server a moment to start before opening the browser.
         time.sleep(1)
-        url = 'http://127.0.0.1:5000'
+        url = f'http://127.0.0.1:{port}'
         webbrowser.open(url)
 
     global server, shutdownEvent
-    server = make_server('localhost', 5000, app)
+    server = make_server('localhost', port, app)
     shutdownEvent = threading.Event()
     threading.Thread(target=open_browser).start()
     threading.Thread(target=server.serve_forever).start()
