@@ -38,7 +38,6 @@ The user interface is displayed through a web browser, but it is still a single 
 not a web application.  It should automatically open a web browser displaying the user interface.  If for
 any reason that does not happen, open a browser yourself and point it to the address displayed in the console
 window (usually http://127.0.0.1:5000). If the port 5000 is already in use by another program, a different
-port can be selected by
-
-    openmm-setup -p, --port [PORT_NUMBER]
+port can be selected with the -p option, for example
+    openmm-setup -p 5001
 
