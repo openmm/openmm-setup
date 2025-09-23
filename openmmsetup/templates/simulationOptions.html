@@ -30,46 +30,61 @@
         <div class="tab-content">
             <div id="system" class="tab-pane fade in active">
             <p/>
-            <div class="form-group">
-            <label for="nonbondedMethod">Nonbonded Method</label>
-            {% if 'forcefield' in session and session['forcefield'].startswith('amoeba') %}
+            {% if session['isAmoeba'] %}
+                <div class="form-group">
+                <label for="nonbondedMethod">Nonbonded Method</label>
                 {{ choice('nonbondedMethod', 'Select how to compute long range nonbonded interactions.', [
                     ('NoCutoff', 'No cutoff', 'The system is not periodic, and no cutoff is applied to nonbonded interactions.'),
                     ('PME', 'PME', 'Periodic boundary conditions are used.  Long range interactions are computed with Particle Mesh Ewald.')]) }}
+                </div>
+                <div class="form-group" id="cutoffRow">
+                <label for="cutoff">Multipole Cutoff Distance (nm)</label>
+                {{ textfield('cutoff', 'Multipole interactions beyond this distance will be ignored.') }}
+                </div>
+                <div class="form-group" id="cutoffRow2">
+                <label for="vdwCutoff">Van der Waals Cutoff Distance (nm)</label>
+                {{ textfield('vdwCutoff', 'Van der Waals interactions beyond this distance will be ignored.') }}
+                </div>
+                <div class="form-group">
+                <label for="inducedEpsilon">Induced Dipole Tolerance</label>
+                {{ textfield('inducedEpsilon', 'Induced dipoles will be converged to this tolerance.') }}
+                </div>
             {% else %}
-                {{ choice('nonbondedMethod', 'Select how to compute long range nonbonded interactions.', [
-                    ('NoCutoff', 'No cutoff', 'The system is not periodic, and no cutoff is applied to nonbonded interactions.'),
-                    ('CutoffNonPeriodic', 'Cutoff, non-periodic', 'The system is not periodic.  Long range interactions are cut off with the reaction field method.'),
-                    ('CutoffPeriodic', 'Cutoff, periodic', 'Periodic boundary conditions are used.  Long range interactions are cut off with the reaction field method.'),
-                    ('PME', 'PME', 'Periodic boundary conditions are used.  Long range interactions are computed with Particle Mesh Ewald.')]) }}
+                <div class="form-group">
+                <label for="nonbondedMethod">Nonbonded Method</label>
+                    {{ choice('nonbondedMethod', 'Select how to compute long range nonbonded interactions.', [
+                        ('NoCutoff', 'No cutoff', 'The system is not periodic, and no cutoff is applied to nonbonded interactions.'),
+                        ('CutoffNonPeriodic', 'Cutoff, non-periodic', 'The system is not periodic.  Long range interactions are cut off with the reaction field method.'),
+                        ('CutoffPeriodic', 'Cutoff, periodic', 'Periodic boundary conditions are used.  Long range interactions are cut off with the reaction field method.'),
+                        ('PME', 'PME', 'Periodic boundary conditions are used.  Long range interactions are computed with Particle Mesh Ewald.')]) }}
+                </div>
+                <div class="form-group" id="cutoffRow">
+                <label for="cutoff">Cutoff Distance (nm)</label>
+                {{ textfield('cutoff', 'Nonbonded interactions beyond this distance will be ignored.') }}
+                </div>
+                <div class="form-group">
+                <label for="constraints">Constraints</label>
+                {{ choice('constraints', 'Select which bonds to replace with rigid constraints.', [
+                    ('none', 'None', 'No degrees of freedom are constrained.'),
+                    ('water', 'Water only', 'Water molecules are kept rigid, but no other degrees of freedom are constrained.'),
+                    ('hbonds', 'Bonds involving hydrogen', 'The lengths of bonds involving a hydrogen atom are kept fixed.  Water molecules are kept rigid.'),
+                    ('allbonds', 'All bonds', 'All bond lengths are kept fixed.  Water molecules are kept rigid.')]) }}
+                </div>
+                <div class="form-group" id="constraintTolRow">
+                <label for="constraintTol">Constraint Error Tolerance</label>
+                {{ textfield('constraintTol', 'The maximum allowed relative error in constrained distance.') }}
+                </div>
+                <div class="form-group">
+                <label><input type="checkbox" name="hmr" id="hmr" oninput="optionChanged()" {{ 'checked' if session['hmr'] else '' }}> Hydrogen Mass Repartitioning</label>
+                </div>
+                <div class="form-group" id="hmrOptions">
+                    <label for="hmrMass">Hydrogen Mass (amu)</label>
+                    {{ textfield('hmrMass', 'The mass of hydrogen atoms.') }}
+                </div>
             {% endif %}
-            </div>
-            <div class="form-group" id="cutoffRow">
-            <label for="cutoff">Cutoff Distance (nm)</label>
-            {{ textfield('cutoff', 'Nonbonded interactions beyond this distance will be ignored.') }}
-            </div>
             <div class="form-group" id="ewaldTolRow">
             <label for="ewaldTol">Ewald Error Tolerance</label>
             {{ textfield('ewaldTol', 'This determines the accuracy of interactions computed with PME.') }}
-            </div>
-            <div class="form-group">
-            <label for="constraints">Constraints</label>
-            {{ choice('constraints', 'Select which bonds to replace with rigid constraints.', [
-                ('none', 'None', 'No degrees of freedom are constrained.'),
-                ('water', 'Water only', 'Water molecules are kept rigid, but no other degrees of freedom are constrained.'),
-                ('hbonds', 'Bonds involving hydrogen', 'The lengths of bonds involving a hydrogen atom are kept fixed.  Water molecules are kept rigid.'),
-                ('allbonds', 'All bonds', 'All bond lengths are kept fixed.  Water molecules are kept rigid.')]) }}
-            </div>
-            <div class="form-group" id="constraintTolRow">
-            <label for="constraintTol">Constraint Error Tolerance</label>
-            {{ textfield('constraintTol', 'The maximum allowed relative error in constrained distance.') }}
-            </div>
-            <div class="form-group">
-            <label><input type="checkbox" name="hmr" id="hmr" oninput="optionChanged()" {{ 'checked' if session['hmr'] else '' }}> Hydrogen Mass Repartitioning</label>
-            </div>
-            <div class="form-group" id="hmrOptions">
-                <label for="hmrMass">Hydrogen Mass (amu)</label>
-                {{ textfield('hmrMass', 'The mass of hydrogen atoms.') }}
             </div>
             </div>
         
@@ -159,7 +174,7 @@
             </div>
             <div id="logFileOptions">
                 <div class="form-group">
-                <label for="davaFilename">Data Filename</label>
+                <label for="dataFilename">Data Filename</label>
                 {{ textfield('dataFilename', 'The filename for the log file.') }}
                 </div>
                 <div class="form-group">
@@ -307,10 +322,14 @@ function optionChanged() {
     nonbondedMethod = document.getElementById("nonbondedMethod").value;
     document.getElementById("cutoffRow").hidden = (nonbondedMethod == 'NoCutoff');
     document.getElementById("ewaldTolRow").hidden = (nonbondedMethod != 'PME');
+{% if session['isAmoeba'] %}
+    document.getElementById("cutoffRow2").hidden = (nonbondedMethod == 'NoCutoff');
+{% else %}
     constraints = document.getElementById("constraints").value;
     document.getElementById("constraintTolRow").hidden = (constraints == 'none');
     hmr = document.getElementById("hmr").checked;
     document.getElementById("hmrOptions").hidden = !hmr;
+{% endif %}
     ensemble = document.getElementById("ensemble").value;
     document.getElementById("pressureRow").hidden = (ensemble != 'npt');
     document.getElementById("barostatIntervalRow").hidden = (ensemble != 'npt');
