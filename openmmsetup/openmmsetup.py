@@ -68,6 +68,8 @@ def showConfigureFiles():
             return render_template('configureCharmmFiles.html')
         elif fileType == 'gromacs':
             return render_template('configureGromacsFiles.html')
+        elif fileType == 'tinker':
+            return render_template('configureTinkerFiles.html')
     except:
         app.logger.error('Error displaying configure files page', exc_info=True)
     # The file type is invalid, so send them back to the select file type page.
@@ -111,6 +113,12 @@ def configureFiles():
             return showConfigureFiles()
         saveUploadedFiles()
         session['gromacsIncludeDir'] = request.form.get('gromacsIncludeDir', '')
+    elif fileType == 'tinker':
+        if 'xyzFile' not in request.files or request.files['xyzFile'].filename == '':
+            # They didn't select a file.  Send them back.
+            return showConfigureFiles()
+        session['waterModel'] = request.form.get('waterModel', '')
+        saveUploadedFiles()
     configureDefaultOptions()
     return showSimulationOptions()
 
@@ -396,14 +404,20 @@ def simulate(output, outputDir, script):
 def configureDefaultOptions():
     """Select default options based on the file format and force field."""
     implicitWater = False
-    if session['fileType'] == 'pdb' and session['waterModel'] == 'implicit':
+    if (session['fileType'] == 'pdb' or session['fileType'] == 'tinker') and session['waterModel'] == 'implicit':
         implicitWater = True
-    isAmoeba = session['fileType'] == 'pdb' and 'amoeba' in session['forcefield']
+    isAmoeba = (session['fileType'] == 'pdb' and 'amoeba' in session['forcefield']) or (session['fileType'] == 'tinker')
     isDrude = session['fileType'] == 'pdb' and session['forcefield'].startswith('charmm_polar')
+    session['isAmoeba'] = isAmoeba
     session['ensemble'] = 'nvt' if implicitWater else 'npt'
     session['platform'] = 'CUDA'
     session['precision'] = 'single'
-    session['cutoff'] = '2.0' if implicitWater else '1.0'
+    if isAmoeba:
+        session['cutoff'] = '0.7'
+        session['vdwCutoff'] = '0.9'
+        session['inducedEpsilon'] = '0.00001'
+    else:
+        session['cutoff'] = '2.0' if implicitWater else '1.0'
     session['ewaldTol'] = '0.0005'
     session['constraintTol'] = '0.000001'
     session['hmr'] = True
@@ -420,7 +434,10 @@ def configureDefaultOptions():
     session['friction'] = '1.0'
     session['pressure'] = '1.0'
     session['barostatInterval'] = '25'
-    session['nonbondedMethod'] = 'CutoffNonPeriodic' if implicitWater else 'PME'
+    if implicitWater:
+        session['nonbondedMethod'] = 'NoCutoff' if isAmoeba else 'CutoffNonPeriodic'
+    else:
+        session['nonbondedMethod'] = 'PME'
     session['writeTrajectory'] = True
     session['trajFormat'] = 'dcd'
     session['trajFilename'] = 'trajectory.dcd'
@@ -474,6 +491,7 @@ os.chdir(outputDir)""")
     
     script.append('\n# Input Files\n')
     fileType = session['fileType']
+    isAmoeba = session['isAmoeba']
     if fileType == 'pdb':
         pdbType = session['pdbType']
         if pdbType == 'pdb':
@@ -508,27 +526,37 @@ os.chdir(outputDir)""")
         script.append("gro = GromacsGroFile('%s')" % uploadedFiles['groFile'][0][1])
         script.append("top = GromacsTopFile('%s', includeDir='%s'," % (uploadedFiles['topFile'][0][1], session['gromacsIncludeDir']))
         script.append("    periodicBoxVectors=gro.getPeriodicBoxVectors())")
+    elif fileType == 'tinker':
+        ffFiles = ', '.join(["'%s'" % f[1] for f in uploadedFiles['ffFiles']])
+        script.append("tinker = TinkerFiles('%s', [%s])" % (uploadedFiles['xyzFile'][0][1], ffFiles))
 
     # System configuration
 
     script.append('\n# System Configuration\n')
     nonbondedMethod = session['nonbondedMethod']
     script.append('nonbondedMethod = %s' % nonbondedMethod)
-    if nonbondedMethod != 'NoCutoff':
-        script.append('nonbondedCutoff = %s*nanometers' % session['cutoff'])
+    if isAmoeba:
+        if nonbondedMethod != 'NoCutoff':
+            script.append('multipoleCutoff = %s*nanometers' % session['cutoff'])
+            script.append('vdwCutoff = %s*nanometers' % session['vdwCutoff'])
+        script.append('mutualInducedTargetEpsilon = %s' % session['inducedEpsilon'])
+        constraints = 'none'
+    else:
+        if nonbondedMethod != 'NoCutoff':
+            script.append('nonbondedCutoff = %s*nanometers' % session['cutoff'])
+        constraints = session['constraints']
+        constraintMethods = {'none': 'None',
+                             'water': 'None',
+                             'hbonds': 'HBonds',
+                             'allbonds': 'AllBonds'}
+        script.append('constraints = %s' % constraintMethods[constraints])
+        script.append('rigidWater = %s' % ('False' if constraints == 'none' else 'True'))
+        if constraints != 'none':
+            script.append('constraintTolerance = %s' % session['constraintTol'])
+        if session['hmr']:
+            script.append('hydrogenMass = %s*amu' % session['hmrMass'])
     if nonbondedMethod == 'PME':
         script.append('ewaldErrorTolerance = %s' % session['ewaldTol'])
-    constraints = session['constraints']
-    constraintMethods = {'none': 'None',
-                         'water': 'None',
-                         'hbonds': 'HBonds',
-                         'allbonds': 'AllBonds'}
-    script.append('constraints = %s' % constraintMethods[constraints])
-    script.append('rigidWater = %s' % ('False' if constraints == 'none' else 'True'))
-    if constraints != 'none':
-        script.append('constraintTolerance = %s' % session['constraintTol'])
-    if session['hmr']:
-        script.append('hydrogenMass = %s*amu' % session['hmrMass'])
 
     # Integration options
 
@@ -583,27 +611,44 @@ os.chdir(outputDir)""")
     elif fileType == 'gromacs':
         script.append('topology = top.topology')
         script.append('positions = gro.positions')
-    if fileType == 'pdb' and (forcefield == 'charmm_polar_2019.xml' or forcefield == 'charmm_polar_2023.xml' or 'tip4p' in water or 'tip5p' in water):
-        script.append('modeller = Modeller(topology, positions)')
-        script.append('modeller.addExtraParticles(forcefield)')
-        script.append('topology = modeller.topology')
-        script.append('positions = modeller.positions')
+    elif fileType == 'tinker':
+        script.append('topology = tinker.topology')
+        script.append('positions = tinker.positions')
+    if fileType == 'pdb' and not isAmoeba:
+        if forcefield == 'charmm_polar_2019.xml' or forcefield == 'charmm_polar_2023.xml' or 'tip4p' in water or 'tip5p' in water:
+            script.append('modeller = Modeller(topology, positions)')
+            script.append('modeller.addExtraParticles(forcefield)')
+            script.append('topology = modeller.topology')
+            script.append('positions = modeller.positions')
     hmrOptions = ', hydrogenMass=hydrogenMass' if session['hmr'] else ''
+    if isAmoeba:
+        cutoffOptions = ' nonbondedCutoff=multipoleCutoff, vdwCutoff=vdwCutoff,' if nonbondedMethod == 'PME' else ''
+    else:
+        cutoffOptions = ' nonbondedCutoff=nonbondedCutoff,' if nonbondedMethod != 'NoCutoff' else ''
     if fileType  == 'pdb':
-        script.append('system = forcefield.createSystem(topology, nonbondedMethod=nonbondedMethod,%s' % (' nonbondedCutoff=nonbondedCutoff,' if nonbondedMethod != 'NoCutoff' else ''))
-        script.append('    constraints=constraints, rigidWater=rigidWater%s%s)' % (', ewaldErrorTolerance=ewaldErrorTolerance' if nonbondedMethod == 'PME' else '', hmrOptions))
+        script.append('system = forcefield.createSystem(topology, nonbondedMethod=nonbondedMethod,%s' % cutoffOptions)
+        if isAmoeba:
+            script.append('    mutualInducedTargetEpsilon=mutualInducedTargetEpsilon)')
+        else:
+            script.append('    constraints=constraints, rigidWater=rigidWater%s%s)' % (', ewaldErrorTolerance=ewaldErrorTolerance' if nonbondedMethod == 'PME' else '', hmrOptions))
     elif fileType == 'amber':
-        script.append('system = prmtop.createSystem(nonbondedMethod=nonbondedMethod,%s' % (' nonbondedCutoff=nonbondedCutoff,' if nonbondedMethod != 'NoCutoff' else ''))
+        script.append('system = prmtop.createSystem(nonbondedMethod=nonbondedMethod,%s' % cutoffOptions)
         script.append('    constraints=constraints, rigidWater=rigidWater%s%s)' % (', ewaldErrorTolerance=ewaldErrorTolerance' if nonbondedMethod == 'PME' else '', hmrOptions))
     elif fileType == 'charmm':
-        script.append('system = psf.createSystem(params, nonbondedMethod=nonbondedMethod,%s' % (' nonbondedCutoff=nonbondedCutoff,' if nonbondedMethod != 'NoCutoff' else ''))
+        script.append('system = psf.createSystem(params, nonbondedMethod=nonbondedMethod,%s' % cutoffOptions)
         script.append('    constraints=constraints, rigidWater=rigidWater%s%s)' % (', ewaldErrorTolerance=ewaldErrorTolerance' if nonbondedMethod == 'PME' else '', hmrOptions))
     elif fileType == 'gromacs':
-        script.append('system = top.createSystem(nonbondedMethod=nonbondedMethod,%s' % (' nonbondedCutoff=nonbondedCutoff,' if nonbondedMethod != 'NoCutoff' else ''))
+        script.append('system = top.createSystem(nonbondedMethod=nonbondedMethod,%s' % cutoffOptions)
         script.append('    constraints=constraints, rigidWater=rigidWater%s%s)' % (', ewaldErrorTolerance=ewaldErrorTolerance' if nonbondedMethod == 'PME' else '', hmrOptions))
+    elif fileType == 'tinker':
+        cutoffOptions = ' nonbondedCutoff=multipoleCutoff, vdwCutoff=vdwCutoff,' if nonbondedMethod == 'PME' else ''
+        ewaldOptions = ', ewaldErrorTolerance=ewaldErrorTolerance' if nonbondedMethod == 'PME' else ''
+        waterOptions = ', implicitSolvent=True' if session['waterModel'] == 'implicit' else ''
+        script.append('system = tinker.createSystem(nonbondedMethod=nonbondedMethod,%s' % cutoffOptions)
+        script.append('    mutualInducedTargetEpsilon=mutualInducedTargetEpsilon%s%s)' % (ewaldOptions, waterOptions))
     if ensemble == 'npt':
         script.append('system.addForce(MonteCarloBarostat(pressure, temperature, barostatInterval))')
-    if fileType == 'pdb' and forcefield.startswith('amoeba'):
+    if isAmoeba:
         # Use a MTSLangevinIntegrator.
         script.append('for force in system.getForces():')
         script.append('    if isinstance(force, AmoebaMultipoleForce) or isinstance(force, AmoebaVdwForce) or isinstance(force, AmoebaGeneralizedKirkwoodForce):')
