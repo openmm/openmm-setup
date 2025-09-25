@@ -410,7 +410,7 @@ def configureDefaultOptions():
     isDrude = session['fileType'] == 'pdb' and session['forcefield'].startswith('charmm_polar')
     session['isAmoeba'] = isAmoeba
     session['ensemble'] = 'nvt' if implicitWater else 'npt'
-    session['platform'] = 'CUDA'
+    session['platform'] = 'auto'
     session['precision'] = 'single'
     if isAmoeba:
         session['cutoff'] = '0.7'
@@ -574,9 +574,10 @@ os.chdir(outputDir)""")
     script.append('\n# Simulation Options\n')
     script.append('steps = %s' % session['steps'])
     script.append('equilibrationSteps = %s' % session['equilibrationSteps'])
-    script.append("platform = Platform.getPlatformByName('%s')" % session['platform'])
-    if session['platform'] in ('CUDA', 'OpenCL'):
-        script.append("platformProperties = {'Precision': '%s'}" % session['precision'])
+    if session['platform'] != 'auto':
+        script.append("platform = Platform.getPlatformByName('%s')" % session['platform'])
+        if session['platform'] in ('CUDA', 'HIP', 'OpenCL'):
+            script.append("platformProperties = {'Precision': '%s'}" % session['precision'])
     if session['writeTrajectory']:
         if session['trajFormat'] == 'dcd':
             script.append("dcdReporter = DCDReporter('%s', %s)" % (session['trajFilename'], session['trajInterval']))
@@ -660,7 +661,7 @@ os.chdir(outputDir)""")
         script.append('integrator = LangevinMiddleIntegrator(temperature, friction, dt)')
     if constraints != 'none':
         script.append('integrator.setConstraintTolerance(constraintTolerance)')
-    script.append('simulation = Simulation(topology, system, integrator, platform%s)' % (', platformProperties' if session['platform'] in ('CUDA', 'OpenCL') else ''))
+    script.append('simulation = Simulation(topology, system, integrator%s%s)' % (', platform' if session['platform'] != 'auto' else '', ', platformProperties' if session['platform'] in ('CUDA', 'HIP', 'OpenCL') else ''))
     script.append('simulation.context.setPositions(positions)')
 
     # Output XML files for system and integrator
