@@ -535,6 +535,7 @@ os.chdir(outputDir)""")
     script.append('\n# System Configuration\n')
     nonbondedMethod = session['nonbondedMethod']
     script.append('nonbondedMethod = %s' % nonbondedMethod)
+    isPME = nonbondedMethod in ('PME', 'LJPME')
     if isAmoeba:
         if nonbondedMethod != 'NoCutoff':
             script.append('multipoleCutoff = %s*nanometers' % session['cutoff'])
@@ -555,7 +556,7 @@ os.chdir(outputDir)""")
             script.append('constraintTolerance = %s' % session['constraintTol'])
         if session['hmr']:
             script.append('hydrogenMass = %s*amu' % session['hmrMass'])
-    if nonbondedMethod == 'PME':
+    if isPME:
         script.append('ewaldErrorTolerance = %s' % session['ewaldTol'])
 
     # Integration options
@@ -623,7 +624,7 @@ os.chdir(outputDir)""")
             script.append('positions = modeller.positions')
     hmrOptions = ', hydrogenMass=hydrogenMass' if session['hmr'] else ''
     if isAmoeba:
-        cutoffOptions = ' nonbondedCutoff=multipoleCutoff, vdwCutoff=vdwCutoff,' if nonbondedMethod == 'PME' else ''
+        cutoffOptions = ' nonbondedCutoff=multipoleCutoff, vdwCutoff=vdwCutoff,' if isPME else ''
     else:
         cutoffOptions = ' nonbondedCutoff=nonbondedCutoff,' if nonbondedMethod != 'NoCutoff' else ''
     if fileType  == 'pdb':
@@ -631,19 +632,19 @@ os.chdir(outputDir)""")
         if isAmoeba:
             script.append('    mutualInducedTargetEpsilon=mutualInducedTargetEpsilon)')
         else:
-            script.append('    constraints=constraints, rigidWater=rigidWater%s%s)' % (', ewaldErrorTolerance=ewaldErrorTolerance' if nonbondedMethod == 'PME' else '', hmrOptions))
+            script.append('    constraints=constraints, rigidWater=rigidWater%s%s)' % (', ewaldErrorTolerance=ewaldErrorTolerance' if isPME else '', hmrOptions))
     elif fileType == 'amber':
         script.append('system = prmtop.createSystem(nonbondedMethod=nonbondedMethod,%s' % cutoffOptions)
-        script.append('    constraints=constraints, rigidWater=rigidWater%s%s)' % (', ewaldErrorTolerance=ewaldErrorTolerance' if nonbondedMethod == 'PME' else '', hmrOptions))
+        script.append('    constraints=constraints, rigidWater=rigidWater%s%s)' % (', ewaldErrorTolerance=ewaldErrorTolerance' if isPME else '', hmrOptions))
     elif fileType == 'charmm':
         script.append('system = psf.createSystem(params, nonbondedMethod=nonbondedMethod,%s' % cutoffOptions)
-        script.append('    constraints=constraints, rigidWater=rigidWater%s%s)' % (', ewaldErrorTolerance=ewaldErrorTolerance' if nonbondedMethod == 'PME' else '', hmrOptions))
+        script.append('    constraints=constraints, rigidWater=rigidWater%s%s)' % (', ewaldErrorTolerance=ewaldErrorTolerance' if isPME else '', hmrOptions))
     elif fileType == 'gromacs':
         script.append('system = top.createSystem(nonbondedMethod=nonbondedMethod,%s' % cutoffOptions)
-        script.append('    constraints=constraints, rigidWater=rigidWater%s%s)' % (', ewaldErrorTolerance=ewaldErrorTolerance' if nonbondedMethod == 'PME' else '', hmrOptions))
+        script.append('    constraints=constraints, rigidWater=rigidWater%s%s)' % (', ewaldErrorTolerance=ewaldErrorTolerance' if isPME else '', hmrOptions))
     elif fileType == 'tinker':
-        cutoffOptions = ' nonbondedCutoff=multipoleCutoff, vdwCutoff=vdwCutoff,' if nonbondedMethod == 'PME' else ''
-        ewaldOptions = ', ewaldErrorTolerance=ewaldErrorTolerance' if nonbondedMethod == 'PME' else ''
+        cutoffOptions = ' nonbondedCutoff=multipoleCutoff, vdwCutoff=vdwCutoff,' if isPME else ''
+        ewaldOptions = ', ewaldErrorTolerance=ewaldErrorTolerance' if isPME else ''
         waterOptions = ', implicitSolvent=True' if session['waterModel'] == 'implicit' else ''
         script.append('system = tinker.createSystem(nonbondedMethod=nonbondedMethod,%s' % cutoffOptions)
         script.append('    mutualInducedTargetEpsilon=mutualInducedTargetEpsilon%s%s)' % (ewaldOptions, waterOptions))
