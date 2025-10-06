@@ -56,7 +56,8 @@
                         ('NoCutoff', 'No cutoff', 'The system is not periodic, and no cutoff is applied to nonbonded interactions.'),
                         ('CutoffNonPeriodic', 'Cutoff, non-periodic', 'The system is not periodic.  Long range interactions are cut off with the reaction field method.'),
                         ('CutoffPeriodic', 'Cutoff, periodic', 'Periodic boundary conditions are used.  Long range interactions are cut off with the reaction field method.'),
-                        ('PME', 'PME', 'Periodic boundary conditions are used.  Long range interactions are computed with Particle Mesh Ewald.')]) }}
+                        ('PME', 'PME', 'Periodic boundary conditions are used.  Long range interactions are computed with Particle Mesh Ewald.'),
+                        ('LJPME', 'LJPME', 'Periodic boundary conditions are used.  Particle Mesh Ewald is used both for Coulomb interactions and for the attractive part of Lennard-Jones interactions.')]) }}
                 </div>
                 <div class="form-group" id="cutoffRow">
                 <label for="cutoff">Cutoff Distance (nm)</label>
@@ -324,7 +325,7 @@ function optionChanged() {
     
     nonbondedMethod = document.getElementById("nonbondedMethod").value;
     document.getElementById("cutoffRow").hidden = (nonbondedMethod == 'NoCutoff');
-    document.getElementById("ewaldTolRow").hidden = (nonbondedMethod != 'PME');
+    document.getElementById("ewaldTolRow").hidden = (nonbondedMethod != 'PME' && nonbondedMethod != 'LJPME');
 {% if session['isAmoeba'] %}
     document.getElementById("cutoffRow2").hidden = (nonbondedMethod == 'NoCutoff');
 {% else %}
