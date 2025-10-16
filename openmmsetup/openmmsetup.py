@@ -735,6 +735,9 @@ def main():
         # Give the server a moment to start before opening the browser.
         time.sleep(1)
         url = f'http://127.0.0.1:{port}'
+
+        print("OpenMM Setup should open automatically in a web browser.")
+        print(f"If this does not occur, you can navigate to <{url}>.")
         webbrowser.open(url)
 
     global server, shutdownEvent
